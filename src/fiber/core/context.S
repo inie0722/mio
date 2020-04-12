@@ -3,24 +3,24 @@ create_context:
 //保存原协程信息
     push %rax
     push %rbx
+    push %rcx
+
     mov %rsp, %rax
     mov %rbp, %rbx
 
 //切换到新协程
     mov (%rdi), %rsp
     mov (%rdi), %rbp
-    push %rsi
+
+    lea __start(%rip), %rcx
+//入口地址
+    push %rcx
 
 //创建上下文
     push %rbp
 
-    push %rax
-    push %rbx
-    push %rcx
-    push %rdx
-
-    push %rdx
     push %rsi
+    push %rcx
 
     push %r8
     push %r9
@@ -36,21 +36,24 @@ create_context:
 //恢复 原协程
     mov %rax, %rsp
     mov %rbx, %rbp
+
+    pop %rcx
     pop %rbx
     pop %rax
+
+    ret
+
+__start:
+    mov %rax, %rdi
+    jmp *%rbx
     ret
 
 .global swap_context
 swap_context:
     push %rbp
 
-    push %rax
     push %rbx
     push %rcx
-    push %rdx
-
-    push %rdi
-    push %rsi
 
     push %r8
     push %r9
@@ -63,6 +66,7 @@ swap_context:
 
     mov %rsp, (%rdi)
     mov %rsi, %rsp
+    mov %rdx, %rax
 
     pop %r15
     pop %r14
@@ -73,14 +77,9 @@ swap_context:
     pop %r9
     pop %r8
 
-    pop %rsi
-    pop %rdi
-
-    pop %rdx
     pop %rcx
     pop %rbx
-    pop %rax
 
-    pop %rbx
+    pop %rbp
     
     ret
