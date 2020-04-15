@@ -4,7 +4,7 @@ project(InNET)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
-add_definitions(-Wall -O3)
+add_definitions(-Wall -O3 -std=gnu++17)
 
 include_directories(include/)
 

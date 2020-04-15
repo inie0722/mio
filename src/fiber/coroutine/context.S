@@ -18,7 +18,7 @@ create_context:
 
 //创建上下文
     push %rbp
-
+    
     push %rsi
     push %rcx
 
@@ -45,8 +45,7 @@ create_context:
 
 __start:
     mov %rax, %rdi
-    jmp *%rbx
-    ret
+    call *%rbx
 
 .global swap_context
 swap_context:
