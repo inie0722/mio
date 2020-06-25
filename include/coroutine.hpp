@@ -4,35 +4,38 @@
 
 #include <memory>
 
-class coroutine
+namespace libcpp
 {
-
-private:
-    struct
+    class coroutine
     {
-        std::shared_ptr<char[]> begin;
-        char *end;
-        char *top;
-        size_t size;
-    } run_stack;
 
-    struct
-    {
-        std::unique_ptr<char[]> base;
-        size_t size;
-        size_t capacity;
-    } alone_stack;
+    private:
+        struct
+        {
+            std::shared_ptr<char[]> begin;
+            char *end;
+            char *top;
+            size_t size;
+        } run_stack;
 
-    char *caller_context;
+        struct
+        {
+            std::unique_ptr<char[]> base;
+            size_t size;
+            size_t capacity;
+        } alone_stack;
 
-    void save_context();
+        char *caller_context;
 
-public:
-    coroutine(void (*const start)(void *arg), const std::shared_ptr<char[]> &stack, const size_t stack_size);
+        void save_context();
 
-    void *resume(void *arg);
+    public:
+        coroutine(void (*const start)(void *arg), const std::shared_ptr<char[]> &stack, const size_t stack_size);
 
-    void *yeid(void *ret);
+        void *resume(void *arg);
 
-    ~coroutine();
-};
+        void *yeid(void *ret);
+
+        ~coroutine();
+    };
+} // namespace libcpp

@@ -8,6 +8,7 @@ extern "C"
 #include <string.h>
 
 using namespace std;
+using namespace libcpp;
 
 void coroutine::save_context()
 {
