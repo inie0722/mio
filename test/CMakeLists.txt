@@ -2,6 +2,6 @@ project(test)
 
 add_subdirectory(parallelism)
 
-add_executable(test test.cpp)
+add_executable(log log.cpp)
 
-target_link_libraries(test fiber)
+target_link_libraries(log pthread)
