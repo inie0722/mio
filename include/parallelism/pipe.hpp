@@ -24,6 +24,14 @@ namespace libcpp
         }
 
     public:
+        pipe()
+        {
+        }
+
+        pipe(pipe && src)
+        {
+        }
+
         void send(const void *data, size_t size)
         {
             //等待可写
