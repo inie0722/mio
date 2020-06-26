@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stddef.h>
 
-#include <iostream>
 #include <fstream>
 #include <thread>
 #include <atomic>
