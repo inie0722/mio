@@ -1,6 +1,9 @@
 #include "log.hpp"
 
+#include <iostream>
+
 #include <boost/format.hpp>
+
 #define LOG libcpp::log<boost::format>::get_log()
 
 int main(void)
