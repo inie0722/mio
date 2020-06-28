@@ -56,7 +56,7 @@ namespace libcpp
             }
 
             this->buffer[index] = val;
-            readable_flag[index].store((index / SIZE) + 1);
+            readable_flag[index].store((index / SIZE) + 1,  std::memory_order_release);
 
             flag = true;
             return true;
@@ -71,7 +71,7 @@ namespace libcpp
                 std::this_thread::yield();
 
             val = this->buffer[index];
-            writable_flag[index].store((index / SIZE) + 1);
+            writable_flag[index].store((index / SIZE) + 1,  std::memory_order_release);
         }
 
         bool try_pop(T &val)
@@ -93,7 +93,7 @@ namespace libcpp
             }
 
             val = this->buffer[index];
-            writable_flag[index].store((index / SIZE) + 1);
+            writable_flag[index].store((index / SIZE) + 1, std::memory_order_release);
 
             flag = true;
             return true;

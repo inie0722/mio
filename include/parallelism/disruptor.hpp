@@ -94,7 +94,7 @@ namespace libcpp
                 std::this_thread::yield();
 
             this->buffer[index] = val;
-            this->readable_flag[index].store((index / SIZE) + 1);
+            this->readable_flag[index].store((index / SIZE) + 1, std::memory_order_release);
         }
 
         bool try_push(const T &val)
@@ -116,7 +116,7 @@ namespace libcpp
             }
 
             this->buffer[index] = val;
-            this->readable_flag[index].store((index / SIZE) + 1);
+            this->readable_flag[index].store((index / SIZE) + 1, std::memory_order_release);
 
             flag = true;
             return true;
