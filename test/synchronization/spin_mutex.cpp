@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define SIZE 1250000
+#define SIZE 12500000
 
 #define THREAD_NUM 4
 
