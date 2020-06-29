@@ -4,6 +4,8 @@ add_subdirectory(parallelism)
 
 add_subdirectory(synchronization)
 
+add_subdirectory(network)
+
 add_executable(log log.cpp)
 
 target_link_libraries(log pthread)
