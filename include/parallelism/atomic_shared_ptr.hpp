@@ -83,21 +83,7 @@ namespace libcpp
 
         bool compare_exchange_strong(std::shared_ptr<T> &expected, std::shared_ptr<T> desired)
         {
-            bool ret;
-            mutex.lock();
-            if (ptr == expected)
-            {
-                ptr = desired;
-                ret = true;
-            }
-            else
-            {
-                expected = ptr;
-                ret = false;
-            }
-
-            mutex.unlock();
-            return ret;
+            return compare_exchange_weak(expected, desired);
         }
     };
 } // namespace libcpp
