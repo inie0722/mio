@@ -1,6 +1,5 @@
 #pragma once
 
-#include "network.hpp"
 #include "tool.hpp"
 
 #include <memory>
@@ -9,6 +8,7 @@
 #include <string>
 #include <shared_mutex>
 #include <iostream>
+#include <functional>
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
@@ -16,171 +16,188 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
-namespace libcpp
+namespace network
 {
-    namespace network
+    namespace event
     {
-        namespace event
+        constexpr size_t BUF_SIZE = 4096;
+        enum class MSG_TYPE : int8_t
         {
-            constexpr size_t BUF_SIZE = 4096;
-            enum class MSG_TYPE : int8_t
-            {
-                SUBSCRIPTION = 0,
-                UNSUBSCRIBE,
-            };
+            SUBSCRIPTION = 0,
+            UNSUBSCRIBE,
+        };
 
-            class service
+        class Service
+        {
+        private:
+            typedef std::list<std::shared_ptr<boost::asio::ip::tcp::socket>> List;
+            std::unordered_map<std::string, List> event_list;
+            std::shared_mutex mutex;
+
+        public:
+            class Session : public std::enable_shared_from_this<Session>
             {
             private:
-                typedef std::list<boost::beast::websocket::stream<boost::asio::ip::tcp::socket> *> List;
-                std::unordered_map<std::string, List> event_list;
-                std::shared_mutex mutex;
+                friend class Service;
+                std::unordered_map<std::string, List> &event_list;
+                std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+                std::shared_mutex &mutex;
+
+                Session(std::shared_ptr<boost::asio::ip::tcp::socket> &socket, std::unordered_map<std::string, List> &event_list, std::shared_mutex &mutex) : event_list(event_list), socket(socket), mutex(mutex)
+                {
+                }
 
             public:
-                class session : public std::enable_shared_from_this<session>
+                ~Session()
                 {
-                private:
-                    friend class service;
-                    std::unordered_map<std::string, List> &event_list;
-                    std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket;
-                    std::shared_mutex &mutex;
+                    std::cout << __func__ << std::endl;
+                }
 
-                    session(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> &socket, std::unordered_map<std::string, List> &event_list, std::shared_mutex &mutex) : event_list(event_list), socket(socket), mutex(mutex)
+                void run(boost::asio::yield_context yield)
+                {
+                    using namespace boost::asio;
+                    //已订阅事件 迭代器
+                    std::unordered_map<std::string, List::iterator> sub_it;
+                    try
                     {
-                    }
-
-                public:
-                    ~session()
-                    {
-                        std::cout << __func__ << std::endl;
-                    }
-
-                    void run(boost::asio::yield_context yield)
-                    {
-                        using namespace boost::asio;
-                        //以订阅事件 迭代器
-                        std::unordered_map<std::string, List::iterator> sub_it;
-                        try
+                        while (1)
                         {
-                            while (1)
-                            {
-                                char buf[BUF_SIZE];
-                                size_t length = socket->async_read_some(buffer(buf, BUF_SIZE), yield);
-                                uint32_t size;
-                                memcpy(&size, buf, sizeof(size));
-                                //转换成本机序
-                                size = network::ntoh(size);
+                            uint64_t size;
+                            char buf[BUF_SIZE];
+                            //读取size
+                            socket->async_receive(buffer(&size, sizeof(size)), yield);
+                            //转换成本机序
+                            size = network::ntoh(size);
 
-                                while (length < size)
-                                {
-                                    length += socket->async_read_some(buffer(&buf[length], size - length), yield);
-                                }
+                            //读取数据
+                            socket->async_receive(buffer(buf, size), yield);
 
-                                MSG_TYPE msg_type = (MSG_TYPE)buf[sizeof(size)];
-                                std::string name(&buf[sizeof(size) + 1]);
+                            //分析消息类型
+                            MSG_TYPE msg_type = (MSG_TYPE)buf[0];
+                            std::string name(&buf[1]);
 
-                                mutex.lock();
-                                try
-                                {
-                                    switch (msg_type)
-                                    {
-                                    //订阅
-                                    case MSG_TYPE::SUBSCRIPTION:
-                                    {
-                                        event_list.at(name).push_front(socket.get());
-                                        sub_it[name] = event_list.at(name).begin();
-                                        break;
-                                    }
-                                    //取消订阅
-                                    case MSG_TYPE::UNSUBSCRIBE:
-                                    {
-                                        event_list.at(name).erase(sub_it.at(name));
-                                        sub_it.erase(name);
-                                        break;
-                                    }
-                                    }
-                                }
-                                catch (const std::exception &e)
-                                {
-                                    std::cerr << e.what() << '\n';
-                                }
-                                mutex.unlock();
-                            }
-                        }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
                             mutex.lock();
-                            for (auto i = sub_it.begin(); i != sub_it.end(); i++)
+                            try
                             {
-                                event_list[i->first].erase(i->second);
+                                switch (msg_type)
+                                {
+                                //订阅
+                                case MSG_TYPE::SUBSCRIPTION:
+                                {
+                                    event_list.at(name).push_front(socket);
+                                    sub_it[name] = event_list.at(name).begin();
+                                    break;
+                                }
+                                //取消订阅
+                                case MSG_TYPE::UNSUBSCRIBE:
+                                {
+                                    event_list.at(name).erase(sub_it.at(name));
+                                    sub_it.erase(name);
+                                    break;
+                                }
+                                }
+                            }
+                            catch (const std::exception &e)
+                            {
+                                std::cerr << e.what() << '\n';
                             }
                             mutex.unlock();
                         }
                     }
-                };
-
-                session *make_session(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket)
-                {
-                    return new session(socket, event_list, mutex);
-                }
-
-                //注册事件
-                void registered(const std::string &name)
-                {
-                    event_list.insert({name, List()});
-                }
-
-                //推送事件
-                void push(const std::string &name, void *arg, uint32_t size)
-                {
-                    using namespace boost::asio;
-
-                    char buf[BUF_SIZE];
-                    size += name.length() + 1 + sizeof(size);
-                    //转换成网络序
-                    auto t = size;
-                    size = network::hton(size);
-                    memcpy(buf, &size, sizeof(size));
-                    size = t;
-
-                    memcpy(&buf[sizeof(size)], name.c_str(), name.length() + 1);
-                    memcpy(&buf[name.length() + 1 + sizeof(size)], arg, size);
-
-                    mutex.lock_shared();
-                    for (auto i = event_list[name].begin(); i != event_list[name].end(); ++i)
+                    catch (const std::exception &e)
                     {
-                        try
+                        std::cerr << e.what() << '\n';
+                        mutex.lock();
+                        for (auto i = sub_it.begin(); i != sub_it.end(); i++)
                         {
-                            (**i).write(buffer(buf, size));
+                            event_list[i->first].erase(i->second);
                         }
-                        catch (const std::exception &e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }
+                        mutex.unlock();
                     }
-                    mutex.unlock_shared();
                 }
             };
-            
-            class client
+
+            Session *make_session(std::shared_ptr<boost::asio::ip::tcp::socket> socket)
             {
-            private:
-                typedef std::function<void(void *socket, void *arg, uint32_t arg_size)> Handler;
-                std::unordered_map<std::string, Handler> handler;
-                std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket;
+                return new Session(socket, event_list, mutex);
+            }
 
-            public:
-                client(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> &socket) : socket(socket)
+            //注册事件
+            void registered(const std::string &name)
+            {
+                event_list.insert({name, List()});
+            }
+
+            //推送事件
+            void push(const std::string &name, void *arg, uint64_t size, std::function<void(void *socket)> handler)
+            {
+                using namespace boost::asio;
+
+                char buf[BUF_SIZE];
+                size += name.length() + 1;
+                //转换成网络序
+                auto t = size;
+                size = network::hton(size);
+                memcpy(buf, &size, sizeof(size));
+                size = t;
+
+                memcpy(&buf[sizeof(size)], name.c_str(), name.length() + 1);
+                memcpy(&buf[sizeof(size) + name.length() + 1], arg, size - ( name.length() + 1));
+
+                mutex.lock_shared();
+                for (auto i = event_list[name].begin(); i != event_list[name].end(); ++i)
                 {
+                    /*
+                    try
+                    {
+                        (**i).send(buffer(buf, size + sizeof(size)));
+                    }
+                    catch (...)
+                    {
+                        handler((*i).get());
+                    }
+                    */
+
+                    boost::asio::spawn((**i).get_executor(), [=](yield_context yield) {
+                        try
+                        {
+                            (**i).async_send(buffer(buf, size + sizeof(size)), yield);
+                        }
+                        catch (...)
+                        {
+                            handler((*i).get());
+                        }
+                    });
                 }
+                mutex.unlock_shared();
+            }
+        };
 
-                void subscription(const std::string &name, Handler handler)
+        class Client : public std::enable_shared_from_this<Client>
+        {
+        private:
+            typedef std::function<void(void *socket, void *arg, uint64_t arg_size)> Handler;
+            std::unordered_map<std::string, Handler> handler;
+            std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+
+        public:
+            Client(std::shared_ptr<boost::asio::ip::tcp::socket> &socket) : socket(socket)
+            {
+            }
+
+            ~Client()
+            {
+                socket->close();
+            }
+
+            bool subscription(const std::string &name, Handler handler)
+            {
+                using namespace boost::asio;
+                try
                 {
-                    using namespace boost::asio;
                     this->handler[name] = handler;
                     char buf[BUF_SIZE];
-                    uint32_t size = sizeof(size) + name.length() + 1 + 1;
+                    uint64_t size = name.length() + 1 + 1;
                     //转换成网络序
                     auto t = size;
                     size = network::hton(size);
@@ -188,15 +205,24 @@ namespace libcpp
                     size = t;
 
                     buf[sizeof(size)] = (char)MSG_TYPE::SUBSCRIPTION;
-                    memcpy(&buf[sizeof(size) + 1], name.c_str(), name.length() + 1);
-                    socket->write(buffer(buf, size));
-                }
 
-                void unsubscribe(const std::string &name)
+                    memcpy(&buf[sizeof(size) + 1], name.c_str(), name.length() + 1);
+                    socket->send(buffer(buf, size + sizeof(size)));
+                }
+                catch (...)
                 {
-                    using namespace boost::asio;
+                    return false;
+                }
+                return true;
+            }
+
+            bool unsubscribe(const std::string &name)
+            {
+                using namespace boost::asio;
+                try
+                {
                     char buf[BUF_SIZE];
-                    uint64_t size = sizeof(size) + name.length() + 1;
+                    uint64_t size = name.length() + 1 + 1;
                     //转换成网络序
                     auto t = size;
                     size = network::hton(size);
@@ -207,36 +233,44 @@ namespace libcpp
                     memcpy(&buf[sizeof(size) + 1], name.c_str(), name.length() + 1);
 
                     size = network::ntoh(size);
-                    socket->write(buffer(buf, size));
+                    socket->send(buffer(buf, size + sizeof(size)));
                 }
-
-                void run(boost::asio::yield_context yield)
+                catch (...)
                 {
-                    using namespace boost::asio;
-                    char arg[BUF_SIZE];
-                    uint32_t arg_size;
+                    return false;
+                }
+                return true;
+            }
 
+            void run(boost::asio::yield_context yield)
+            {
+                using namespace boost::asio;
+                char arg[BUF_SIZE];
+                uint64_t arg_size;
+                try
+                {
                     while (1)
                     {
-                        size_t length = socket->async_read_some(buffer(arg, BUF_SIZE), yield);
-                        uint32_t size;
-                        memcpy(&size, arg, sizeof(size));
-                        //转换成网络序
+                        uint64_t size;
+
+                        socket->async_receive(buffer(&size, sizeof(size)), yield);
+                        //转换成本机
                         size = network::ntoh(size);
+                        socket->async_receive(buffer(arg, size), yield);
 
-                        while (length < size)
-                        {
-                            length += socket->async_read_some(buffer(&arg[length], size - length), yield);
-                        }
+                        std::string name(arg);
+                        arg_size = size - name.length() - 1;
 
-                        std::string name(&arg[sizeof(size)]);
-                        arg_size = size - sizeof(size) - name.length() - 1;
-
-                        handler[name](socket.get(), &arg[sizeof(size)], arg_size - sizeof(size));
+                        handler[name](socket.get(), &arg[name.length() + 1], arg_size);
                     }
                 }
-            };
-        } // namespace event
+                //与服务器断开连接
+                catch (...)
+                {
+                    return;
+                }
+            }
+        };
+    } // namespace event
 
-    } // namespace network
-} // namespace libcpp
+} // namespace network
