@@ -31,9 +31,9 @@ namespace libcpp
         public:
             pipe() : readable_limit_(0), writable_limit_(0){};
 
-            pipe(pipe &) = delete;
-            pipe(pipe &&) = delete;
-            pipe &operator=(pipe &) = delete;
+            pipe(const pipe &) = delete;
+            pipe(const pipe &&) = delete;
+            pipe &operator=(const pipe &) = delete;
 
             void send(const void *data, size_t size)
             {
