@@ -14,7 +14,7 @@ target_link_libraries(disruptor pthread)
 
 target_link_libraries(ring_queue pthread)
 
-target_link_libraries(pipe pthread)
+target_link_libraries(pipe pthread boost_system)
 
 target_link_libraries(boost_queue pthread)
 

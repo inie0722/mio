@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
 #include <string.h>
 
 #include <atomic>
@@ -10,7 +9,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 
-namespace libcpp
+namespace mio
 {
     namespace parallelism
     {
@@ -131,4 +130,4 @@ namespace libcpp
             }
         };
     } // namespace parallelism
-} // namespace libcpp
+} // namespace mio
