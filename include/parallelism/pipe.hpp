@@ -20,15 +20,21 @@ namespace libcpp
         private:
             alignas(64) char buffer_[SIZE_];
 
-            alignas(64) std::atomic<size_t> readable_limit_ = 0;
-            alignas(64) std::atomic<size_t> writable_limit_ = 0;
+            alignas(64) std::atomic<size_t> readable_limit_;
+            alignas(64) std::atomic<size_t> writable_limit_;
 
-            size_t get_index(const size_t index) const
+            size_t get_index(size_t index)
             {
                 return index % SIZE_;
             }
 
         public:
+            pipe() : readable_limit_(0), writable_limit_(0){};
+
+            pipe(pipe &) = delete;
+            pipe(pipe &&) = delete;
+            pipe &operator=(pipe &) = delete;
+
             void send(const void *data, size_t size)
             {
                 //等待可写
@@ -119,7 +125,7 @@ namespace libcpp
                 }
             }
 
-            size_t size()
+            size_t size() const
             {
                 return writable_limit_ - readable_limit_;
             }
