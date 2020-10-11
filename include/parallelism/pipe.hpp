@@ -27,6 +27,46 @@ namespace mio
                 return index % SIZE_;
             }
 
+            void __sned(const void *data, size_t size)
+            {
+                if ((writable_limit_ % SIZE_) + size > SIZE_)
+                {
+                    auto len = SIZE_ - (writable_limit_ % SIZE_);
+                    memcpy(&this->buffer_[get_index(writable_limit_)], data, len);
+                    memcpy(&this->buffer_[get_index(writable_limit_ + len)], (char *)data + len, size - len);
+                }
+                else
+                {
+                    memcpy(&this->buffer_[get_index(writable_limit_)], data, size);
+                }
+                writable_limit_ += size;
+            }
+
+            void __recv(void *data, size_t size)
+            {
+                if ((readable_limit_ % SIZE_) + size > SIZE_)
+                {
+                    auto len = SIZE_ - (readable_limit_ % SIZE_);
+                    memcpy(data, &this->buffer_[get_index(readable_limit_)], len);
+                    memcpy((char *)data + len, &this->buffer_[get_index(readable_limit_ + len)], size - len);
+                }
+                else
+                {
+                    memcpy(data, &this->buffer_[get_index(readable_limit_)], size);
+                }
+                readable_limit_ += size;
+            }
+
+            bool is_can_send(size_t size)
+            {
+                return !(readable_limit_ + SIZE_ < writable_limit_ + size);
+            }
+
+            bool is_can_recv(size_t size)
+            {
+                return !(readable_limit_ + size > writable_limit_);
+            }
+
         public:
             pipe() : readable_limit_(0), writable_limit_(0){};
 
@@ -37,91 +77,54 @@ namespace mio
             void send(const void *data, size_t size)
             {
                 //等待可写
-                while (readable_limit_ + SIZE_ < writable_limit_ + size)
-                    std::this_thread::yield();
+                while (!is_can_send(size))
+                    ;
 
-                if ((writable_limit_ % SIZE_) + size > SIZE_)
-                {
-                    auto len = SIZE_ - (writable_limit_ % SIZE_);
-                    memcpy(&this->buffer_[get_index(writable_limit_)], data, len);
-                    memcpy(&this->buffer_[get_index(writable_limit_ + len)], (char *)data + len, size - len);
-                }
-                else
-                {
-                    memcpy(&this->buffer_[get_index(writable_limit_)], data, size);
-                }
-                writable_limit_ += size;
-            }
-
-            bool try_send(const void *data, size_t size)
-            {
-                //等待可写
-                if (readable_limit_ + SIZE_ < writable_limit_ + size)
-                    return false;
-
-                if ((writable_limit_ % SIZE_) + size > SIZE_)
-                {
-                    auto len = SIZE_ - (writable_limit_ % SIZE_);
-                    memcpy(&this->buffer_[get_index(writable_limit_)], data, len);
-                    memcpy(&this->buffer_[get_index(writable_limit_ + len)], (char *)data + len, size - len);
-                }
-                else
-                    memcpy(&this->buffer_[get_index(writable_limit_)], data, size);
-                writable_limit_ += size;
-                return true;
+                __sned(data, size);
             }
 
             void recv(void *data, size_t size)
             {
                 //等待可读
-                while (readable_limit_ + size > writable_limit_)
-                    std::this_thread::yield();
+                while (!is_can_recv(size))
+                    ;
 
-                if ((readable_limit_ % SIZE_) + size > SIZE_)
-                {
-                    auto len = SIZE_ - (readable_limit_ % SIZE_);
-                    memcpy(data, &this->buffer_[get_index(readable_limit_)], len);
-                    memcpy((char *)data + len, &this->buffer_[get_index(readable_limit_ + len)], size - len);
-                }
-                else
-                {
-                    memcpy(data, &this->buffer_[get_index(readable_limit_)], size);
-                }
-                readable_limit_ += size;
+                __recv(data, size);
+            }
+
+            bool try_send(const void *data, size_t size)
+            {
+                //等待可写
+                if (!is_can_send(size))
+                    return false;
+
+                __sned(data, size);
+                return true;
             }
 
             bool try_recv(void *data, size_t size)
             {
-                //等待可读
-                if (readable_limit_ + size > writable_limit_)
+                if (!is_can_recv(size))
                     return false;
 
-                if ((readable_limit_ % SIZE_) + size > SIZE_)
-                {
-                    auto len = SIZE_ - (readable_limit_ % SIZE_);
-                    memcpy(data, &this->buffer_[get_index(readable_limit_)], len);
-                    memcpy((char *)data + len, &this->buffer_[get_index(readable_limit_ + len)], size - len);
-                }
-                else
-                    memcpy(data, &this->buffer_[get_index(readable_limit_)], size);
-                readable_limit_ += size;
+                __recv(data, size);
                 return true;
             }
 
             void async_send(const void *data, size_t size, boost::asio::yield_context yield)
             {
-                while (!this->try_send(data, size))
-                {
+                while (!is_can_send(size))
                     boost::asio::post(yield);
-                }
+
+                __sned(data, size);
             }
 
             void async_recv(void *data, size_t size, boost::asio::yield_context yield)
             {
-                while (!this->try_recv(data, size))
-                {
+                while (!is_can_recv(size))
                     boost::asio::post(yield);
-                }
+
+                __recv(data, size);
             }
 
             size_t size() const
