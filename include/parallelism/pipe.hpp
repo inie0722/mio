@@ -75,7 +75,7 @@ namespace mio
             {
                 //等待可写
                 while (!is_can_send(size))
-                    ;
+                    std::this_thread::yield();
 
                 __sned(data, size);
             }
@@ -94,7 +94,7 @@ namespace mio
             {
                 //等待可读
                 while (!is_can_recv(size))
-                    ;
+                    std::this_thread::yield();
 
                 __recv(data, size);
             }

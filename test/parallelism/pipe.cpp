@@ -17,7 +17,7 @@ constexpr size_t THREAD_READ_NUM = 1;
 class verify
 {
 public:
-    template <size_t DATA_SIZE>
+    template <size_t DATA_SIZE_>
     void run_one()
     {
         mio::parallelism::pipe<BUF_SIZE> pipe;
@@ -32,12 +32,12 @@ public:
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
         {
             write_thread[i] = std::thread([&]() {
-                char data[DATA_SIZE];
+                char data[DATA_SIZE_];
 
                 auto start = std::chrono::steady_clock::now();
                 for (size_t i = 0; i < SIZE; i++)
                 {
-                    *(size_t *)&data[DATA_SIZE - sizeof(size_t)] = i;
+                    *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)] = i;
                     pipe.send(data, sizeof(data));
                 }
                 auto end = std::chrono::steady_clock::now();
@@ -48,13 +48,13 @@ public:
         for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
             read_thread[i] = std::thread([&]() {
-                char data[DATA_SIZE];
+                char data[DATA_SIZE_];
 
                 auto start = std::chrono::steady_clock::now();
                 for (size_t i = 0; i < SIZE; i++)
                 {
                     pipe.recv(data, sizeof(data));
-                    size_t index = *(size_t *)&data[DATA_SIZE - sizeof(size_t)];
+                    size_t index = *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)];
                     array[index]++;
                 }
                 auto end = std::chrono::steady_clock::now();
@@ -88,13 +88,13 @@ public:
         assert(max == 0);
         assert(min == 0);
 
-        printf("size/%lu byte\t w/%lu ns\t r/%lu ns\n", DATA_SIZE, write_diff.count() / SIZE, read_diff.count() / SIZE);
+        printf("size/%lu byte\t w/%lu ns\t r/%lu ns\n", DATA_SIZE_, write_diff.count() / SIZE, read_diff.count() / SIZE);
     }
 
-    template <size_t... DATA_SIZE>
+    template <size_t... DATA_SIZE_>
     void run()
     {
-        (run_one<DATA_SIZE>(), ...);
+        (run_one<DATA_SIZE_>(), ...);
     }
 };
 
