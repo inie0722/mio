@@ -2,121 +2,108 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <string.h>
 
 #include <iostream>
-#include <atomic>
+#include <memory>
 #include <thread>
-#include <mutex>
 
-using namespace std;
+constexpr size_t SIZE = 10000;
 
-#define SIZE 1250000
+constexpr size_t BUF_SIZE = 1280;
 
-#define BUF_SIZE 1024
+constexpr size_t THREAD_WRITE_NUM = 8;
 
-#define THREAD_WRITE_NUM 8
+constexpr size_t THREAD_READ_NUM = 8;
 
-#define THREAD_READ_NUM 8
-
-libcpp::ring_queue<int> *queue;
-
-using namespace std;
-
-mutex m;
-
-void Write()
+class verify
 {
-    auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < SIZE; i++)
+public:
+    template <size_t DATA_SIZE_>
+    void run_one()
     {
-        queue->push(i);
-        /*
-        while (!queue->try_push(i))
-            ;
-        */
+        typedef mio::parallelism::ring_queue<std::array<char, DATA_SIZE_>, BUF_SIZE> ring_queue_t;
+        auto ring_queue_ptr = std::make_unique<ring_queue_t>();
+        ring_queue_t &ring_queue = *ring_queue_ptr;
+        size_t array[SIZE] = {0};
+
+        std::chrono::nanoseconds write_diff;
+        std::chrono::nanoseconds read_diff;
+
+        std::thread write_thread[THREAD_WRITE_NUM];
+        std::thread read_thread[THREAD_READ_NUM];
+
+        for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
+        {
+            write_thread[i] = std::thread([&]() {
+                std::array<char, DATA_SIZE_> data;
+
+                auto start = std::chrono::steady_clock::now();
+                for (size_t i = 0; i < SIZE; i++)
+                {
+                    *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)] = i;
+                    ring_queue.push(data);
+                }
+                auto end = std::chrono::steady_clock::now();
+                write_diff = end - start;
+            });
+        }
+
+        for (size_t i = 0; i < THREAD_READ_NUM; i++)
+        {
+            read_thread[i] = std::thread([&]() {
+                std::array<char, DATA_SIZE_> data;
+
+                auto start = std::chrono::steady_clock::now();
+                for (size_t i = 0; i < SIZE; i++)
+                {
+                    ring_queue.pop(data);
+                    size_t index = *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)];
+                    array[index]++;
+                }
+                auto end = std::chrono::steady_clock::now();
+                read_diff = end - start;
+            });
+        }
+
+        for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
+        {
+            write_thread[i].join();
+        }
+
+        for (size_t i = 0; i < THREAD_READ_NUM; i++)
+        {
+            read_thread[i].join();
+        }
+
+        size_t max = 0;
+        size_t min = 0;
+        for (size_t i = 0; i < SIZE; i++)
+        {
+            if (array[i] != THREAD_WRITE_NUM)
+            {
+                if (array[i] > THREAD_WRITE_NUM)
+                    max++;
+                else
+                    min++;
+            }
+        }
+
+        assert(max == 0);
+        assert(min == 0);
+
+        printf("size/%lu byte\t w/%lu ns\t r/%lu ns\n", DATA_SIZE_, write_diff.count() / (SIZE * THREAD_WRITE_NUM), read_diff.count() / (SIZE * THREAD_READ_NUM));
     }
 
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff = end - start;
-
-    m.lock();
-    std::cout << this_thread::get_id() << " write time: " << diff.count() << " s\n";
-    m.unlock();
-}
-
-std::atomic<int> *Array = new std::atomic<int>[SIZE];
-
-void Read()
-{
-    auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < SIZE; i++)
+    template <size_t... DATA_SIZE_>
+    void run()
     {
-        int d;
-        queue->pop(d);
-        /*
-        while (!queue->try_pop(d))
-            ;
-        */
-        Array[d]++;
+        (run_one<DATA_SIZE_>(), ...);
     }
-
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff = end - start;
-
-    m.lock();
-    std::cout << this_thread::get_id() << " read time: " << diff.count() << " s\n";
-    m.unlock();
-}
-
-#include <numeric>
-#include <chrono>
+};
 
 int main(void)
 {
-    memset(Array, 0, SIZE * sizeof(*Array));
-    queue = new libcpp::ring_queue<int>;
-
-    std::thread read_thread[THREAD_READ_NUM];
-    for (size_t i = 0; i < THREAD_READ_NUM; i++)
-    {
-        read_thread[i] = thread(Read);
-    }
-
-    std::thread write_thread[THREAD_WRITE_NUM];
-    for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
-    {
-        write_thread[i] = thread(Write);
-    }
-
-    for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
-    {
-        write_thread[i].join();
-    }
-
-    for (size_t i = 0; i < THREAD_READ_NUM; i++)
-    {
-        read_thread[i].join();
-    }
-
-    int max = 0;
-    int min = 0;
-    for (int i = 0; i < SIZE; i++)
-    {
-        if (Array[i] != THREAD_WRITE_NUM)
-        {
-            if (Array[i] > THREAD_WRITE_NUM)
-                max++;
-            else
-                min++;
-        }
-    }
-
-    cout << max << endl;
-    cout << min << endl;
-
-    assert(max == 0);
-    assert(min == 0);
-    delete[] Array;
+    verify v;
+    v.run<64, 128, 256, 512, 1024>();
     return 0;
 }

@@ -1,102 +1,120 @@
 #pragma once
 
-#include "ring_buffer.hpp"
+#include "parallelism/detail/ring_buffer.hpp"
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include <atomic>
+
 #include <thread>
 
-namespace libcpp
+namespace mio
 {
-    template <typename T, size_t SIZE = 4096>
-    class ring_queue
+    namespace parallelism
     {
-    private:
-        detail::ring_buffer<T, SIZE> buffer;
-
-        //可读可写标志
-        detail::ring_buffer<std::atomic<uint64_t>, SIZE> readable_flag;
-        detail::ring_buffer<std::atomic<uint64_t>, SIZE> writable_flag;
-
-        //可读可写界限
-        alignas(64) std::atomic<uint64_t> readable_limit = 0;
-        alignas(64) std::atomic<uint64_t> writable_limit = 0;
-
-    public:
-        void push(const T &val)
+        template <typename T_, size_t SIZE_ = 4096>
+        class ring_queue
         {
-            size_t index = this->writable_limit.fetch_add(1);
+        private:
+            detail::ring_buffer<T_, SIZE_> buffer_;
 
-            //等待可写
-            while (writable_flag[index] != index / SIZE)
-                std::this_thread::yield();
+            //可读可写标志
+            detail::ring_buffer<std::atomic<size_t>, SIZE_> readable_flag_;
+            detail::ring_buffer<std::atomic<size_t>, SIZE_> writable_flag_;
 
-            this->buffer[index] = val;
-            readable_flag[index].store((index / SIZE) + 1);
-        }
+            //可读可写界限
+            alignas(64) std::atomic<size_t> readable_limit_ = 0;
+            alignas(64) std::atomic<size_t> writable_limit_ = 0;
 
-        bool try_push(const T &val)
-        {
-            thread_local bool flag = true;
-
-            thread_local size_t index;
-
-            if (flag == true)
+        public:
+            struct context
             {
-                index = this->writable_limit.fetch_add(1);
+                bool flag = true;
+                size_t index = 0;
+            };
+
+            ring_queue()
+            {
+                for (size_t i = 0; i < SIZE_; i++)
+                {
+                    readable_flag_[i] = 0;
+                    writable_flag_[i] = 0;
+                }
             }
 
-            //等待可写
-            if (writable_flag[index] != index / SIZE)
+            void push(const T_ &val)
             {
-                flag = false;
-                return false;
+                size_t index = this->writable_limit_.fetch_add(1);
+
+                //等待可写
+                while (writable_flag_[index] != index / SIZE_)
+                    std::this_thread::yield();
+
+                this->buffer_[index] = val;
+                readable_flag_[index].store((index / SIZE_) + 1);
             }
 
-            this->buffer[index] = val;
-            readable_flag[index].store((index / SIZE) + 1,  std::memory_order_release);
-
-            flag = true;
-            return true;
-        }
-
-        void pop(T &val)
-        {
-            size_t index = this->readable_limit.fetch_add(1);
-
-            //等待可读
-            while (readable_flag[index] != (index / SIZE) + 1)
-                std::this_thread::yield();
-
-            val = this->buffer[index];
-            writable_flag[index].store((index / SIZE) + 1,  std::memory_order_release);
-        }
-
-        bool try_pop(T &val)
-        {
-            thread_local bool flag = true;
-
-            thread_local size_t index;
-
-            if (flag == true)
+            bool try_push(const T_ &val, context &context)
             {
-                index = this->readable_limit.fetch_add(1);
+                bool &flag = context.flag;
+
+                size_t &index = context.index;
+
+                if (flag == true)
+                {
+                    index = this->writable_limit_.fetch_add(1);
+                }
+
+                //等待可写
+                if (writable_flag_[index] != index / SIZE_)
+                {
+                    flag = false;
+                    return false;
+                }
+
+                this->buffer_[index] = val;
+                readable_flag_[index] = (index / SIZE_) + 1;
+
+                flag = true;
+                return true;
             }
 
-            //等待可读
-            if (readable_flag[index] != (index / SIZE) + 1)
+            void pop(T_ &val)
             {
-                flag = false;
-                return false;
+                size_t index = this->readable_limit_.fetch_add(1);
+
+                //等待可读
+                while (readable_flag_[index] != (index / SIZE_) + 1)
+                    std::this_thread::yield();
+
+                val = this->buffer_[index];
+                writable_flag_[index] = (index / SIZE_) + 1;
             }
 
-            val = this->buffer[index];
-            writable_flag[index].store((index / SIZE) + 1, std::memory_order_release);
+            bool try_pop(T_ &val, context &context)
+            {
+                bool &flag = context.flag;
 
-            flag = true;
-            return true;
-        }
-    };
-} // namespace libcpp
+                size_t &index = context.index;
+
+                if (flag == true)
+                {
+                    index = this->readable_limit_.fetch_add(1);
+                }
+
+                //等待可读
+                if (readable_flag_[index] != (index / SIZE_) + 1)
+                {
+                    flag = false;
+                    return false;
+                }
+
+                val = this->buffer_[index];
+                writable_flag_[index] = (index / SIZE_) + 1;
+
+                flag = true;
+                return true;
+            }
+        };
+    } // namespace parallelism
+} // namespace mio
