@@ -6,9 +6,6 @@
 #include <atomic>
 #include <thread>
 
-#include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
-
 namespace mio
 {
     namespace parallelism
@@ -83,15 +80,6 @@ namespace mio
                 __sned(data, size);
             }
 
-            void recv(void *data, size_t size)
-            {
-                //等待可读
-                while (!is_can_recv(size))
-                    ;
-
-                __recv(data, size);
-            }
-
             bool try_send(const void *data, size_t size)
             {
                 //等待可写
@@ -102,6 +90,15 @@ namespace mio
                 return true;
             }
 
+            void recv(void *data, size_t size)
+            {
+                //等待可读
+                while (!is_can_recv(size))
+                    ;
+
+                __recv(data, size);
+            }
+
             bool try_recv(void *data, size_t size)
             {
                 if (!is_can_recv(size))
@@ -109,22 +106,6 @@ namespace mio
 
                 __recv(data, size);
                 return true;
-            }
-
-            void async_send(const void *data, size_t size, boost::asio::yield_context yield)
-            {
-                while (!is_can_send(size))
-                    boost::asio::post(yield);
-
-                __sned(data, size);
-            }
-
-            void async_recv(void *data, size_t size, boost::asio::yield_context yield)
-            {
-                while (!is_can_recv(size))
-                    boost::asio::post(yield);
-
-                __recv(data, size);
             }
 
             size_t size() const
