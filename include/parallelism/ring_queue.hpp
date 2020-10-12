@@ -5,7 +5,6 @@
 #include <stddef.h>
 
 #include <atomic>
-
 #include <thread>
 
 namespace mio
@@ -51,7 +50,7 @@ namespace mio
                     std::this_thread::yield();
 
                 this->buffer_[index] = val;
-                readable_flag_[index].store((index / SIZE_) + 1);
+                readable_flag_[index] = (index / SIZE_) + 1;
             }
 
             bool try_push(const T_ &val, context &context)

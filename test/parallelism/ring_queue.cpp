@@ -9,7 +9,7 @@
 
 constexpr size_t SIZE = 10000;
 
-constexpr size_t BUF_SIZE = 1280;
+constexpr size_t BUF_SIZE = 4096;
 
 constexpr size_t THREAD_WRITE_NUM = 8;
 
@@ -24,7 +24,7 @@ public:
         typedef mio::parallelism::ring_queue<std::array<char, DATA_SIZE_>, BUF_SIZE> ring_queue_t;
         auto ring_queue_ptr = std::make_unique<ring_queue_t>();
         ring_queue_t &ring_queue = *ring_queue_ptr;
-        size_t array[SIZE] = {0};
+        std::atomic<size_t> array[SIZE] = {0};
 
         std::chrono::nanoseconds write_diff;
         std::chrono::nanoseconds read_diff;
