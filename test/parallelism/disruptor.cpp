@@ -1,116 +1,112 @@
 #include "parallelism/disruptor.hpp"
 
-#include <string.h>
+#include <assert.h>
+#include <stdint.h>
 
 #include <iostream>
+#include <memory>
 #include <thread>
-#include <mutex>
-#include <numeric>
-#include <chrono>
 
-#define SIZE 1250000
+constexpr size_t SIZE = 100000;
 
-#define BUF_SIZE 1024
+constexpr size_t BUF_SIZE = 4096;
 
-#define THREAD_WRITE_NUM 8
+constexpr size_t THREAD_WRITE_NUM = 8;
 
-#define THREAD_READ_NUM 8
+constexpr size_t THREAD_READ_NUM = 8;
 
-libcpp::disruptor<int, THREAD_READ_NUM, BUF_SIZE> *queue;
-
-using namespace std;
-
-mutex m;
-
-void Write()
+class verify
 {
-
-    auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < SIZE; i++)
+public:
+    template <size_t DATA_SIZE_>
+    void run_one()
     {
-        //queue->push(i);
-        
-        while(!queue->try_push(i))
-            ;
+        typedef mio::parallelism::disruptor<std::array<char, DATA_SIZE_>, BUF_SIZE> disruptor_t;
+        typedef typename disruptor_t::reader reader_t;
 
-    }
+        auto disruptor_ptr = std::make_unique<disruptor_t>();
+        disruptor_t &disruptor = *disruptor_ptr;
+        std::atomic<size_t> array[SIZE] = {0};
 
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff = end - start;
+        std::chrono::nanoseconds write_diff;
+        std::chrono::nanoseconds read_diff;
 
-    m.lock();
-    std::cout << this_thread::get_id() << " write time: " << diff.count() << " s\n";
-    m.unlock();
-}
+        std::thread write_thread[THREAD_WRITE_NUM];
+        std::thread read_thread[THREAD_READ_NUM];
 
-void Read(libcpp::disruptor<int, THREAD_READ_NUM, BUF_SIZE>::reader *r)
-{
-    int *array = new int[SIZE];
-    memset(array, 0, SIZE * sizeof(*array));
-
-    auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < SIZE * THREAD_WRITE_NUM; i++)
-    {
-        int d;
-        //r->pull(d);
-        
-        while (!r->try_pull(d))
-            ;
-        
-        array[d]++;
-    }
-
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff = end - start;
-
-    m.lock();
-    std::cout << this_thread::get_id() << " read time: " << diff.count() << " s\n";
-    m.unlock();
-
-    int max = 0;
-    int min = 0;
-    for (int i = 0; i < SIZE; i++)
-    {
-        if (array[i] != THREAD_WRITE_NUM)
+        for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
-            if (array[i] > THREAD_WRITE_NUM)
-                max++;
-            else
-                min++;
+            std::shared_ptr<reader_t> reader(disruptor_ptr->make_reader());
+            read_thread[i] = std::thread([&, reader]() {
+                std::array<char, DATA_SIZE_> data;
+
+                auto start = std::chrono::steady_clock::now();
+                for (size_t i = 0; i < THREAD_WRITE_NUM * SIZE; i++)
+                {
+                    reader->pull(data);
+                    size_t index = *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)];
+                    array[index]++;
+                }
+                auto end = std::chrono::steady_clock::now();
+                read_diff = end - start;
+            });
         }
+
+        for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
+        {
+            write_thread[i] = std::thread([&]() {
+                std::array<char, DATA_SIZE_> data;
+
+                auto start = std::chrono::steady_clock::now();
+                for (size_t i = 0; i < SIZE; i++)
+                {
+                    *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)] = i;
+                    disruptor.push(data);
+                }
+                auto end = std::chrono::steady_clock::now();
+                write_diff = end - start;
+            });
+        }
+
+        for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
+        {
+            write_thread[i].join();
+        }
+
+        for (size_t i = 0; i < THREAD_READ_NUM; i++)
+        {
+            read_thread[i].join();
+        }
+
+        size_t max = 0;
+        size_t min = 0;
+        for (size_t i = 0; i < SIZE; i++)
+        {
+            if (array[i] != THREAD_WRITE_NUM * THREAD_READ_NUM)
+            {
+                if (array[i] > THREAD_WRITE_NUM * THREAD_READ_NUM)
+                    max++;
+                else
+                    min++;
+            }
+        }
+        
+        assert(max == 0);
+        assert(min == 0);
+
+        printf("size/%lu byte\t w/%lu ns\t r/%lu ns\n", DATA_SIZE_, write_diff.count() / (SIZE * THREAD_WRITE_NUM), read_diff.count() / (SIZE * THREAD_READ_NUM));
     }
 
-    assert(max == 0);
-    assert(min == 0);
-    delete[] array;
-}
+    template <size_t... DATA_SIZE_>
+    void run()
+    {
+        (run_one<DATA_SIZE_>(), ...);
+    }
+};
 
 int main(void)
 {
-    queue = new libcpp::disruptor<int, THREAD_READ_NUM, BUF_SIZE>;
-    libcpp::disruptor<int, THREAD_READ_NUM, BUF_SIZE>::reader *r[THREAD_READ_NUM];
-    std::thread read_thread[THREAD_READ_NUM];
-    for (size_t i = 0; i < THREAD_READ_NUM; i++)
-    {
-        r[i] = queue->make_reader();
-        read_thread[i] = thread(Read, r[i]);
-    }
-
-    std::thread write_thread[THREAD_WRITE_NUM];
-    for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
-    {
-        write_thread[i] = thread(Write);
-    }
-
-    for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
-    {
-        write_thread[i].join();
-    }
-
-    for (size_t i = 0; i < THREAD_READ_NUM; i++)
-    {
-        read_thread[i].join();
-    }
-
+    verify v;
+    v.run<64, 128, 256, 512, 1024>();
     return 0;
 }

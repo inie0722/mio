@@ -1,125 +1,153 @@
 #pragma once
 
-#include "ring_buffer.hpp"
+#include "parallelism/detail/ring_buffer.hpp"
 
-#include <assert.h>
 #include <stdint.h>
+
 #include <atomic>
-#include <memory>
-#include <utility>
 #include <thread>
+#include <list>
+#include <shared_mutex>
 
-namespace libcpp
+namespace mio
 {
-    template <typename T, size_t READER_NUM, size_t SIZE = 4096>
-    class disruptor
+    namespace parallelism
     {
-    public:
-        class alignas(64) reader
+        template <typename T_, size_t SIZE_ = 4096>
+        class disruptor
         {
-        private:
-            friend disruptor;
-            disruptor *queue;
-
-            std::atomic<size_t> limit = 0;
-            reader(){};
-            reader(disruptor *queue) : queue(queue)
+        public:
+            class alignas(64) reader
             {
-                this->limit = this->queue->writable_limit.load();
+            private:
+                friend disruptor;
+                disruptor *disruptor_;
+                typename std::list<reader *>::iterator this_it_;
+
+                std::atomic<size_t> limit_ = 0;
+
+                reader(disruptor *disruptor, typename std::list<reader *>::iterator &this_it) : disruptor_(disruptor), this_it_(this_it)
+                {
+                    this->limit_ = this->disruptor_->writable_limit_.load();
+                }
+
+            public:
+                void pull(T_ &ret)
+                {
+                    //等待数据可读
+                    while (disruptor_->readable_flag_[this->limit_] != (limit_ / SIZE_) + 1)
+                        std::this_thread::yield();
+
+                    ret = disruptor_->buffer_[this->limit_];
+                    limit_.fetch_add(1);
+                }
+
+                bool try_pull(T_ &ret)
+                {
+                    //等待数据可读
+                    while (disruptor_->readable_flag_[this->limit_] != (limit_ / SIZE_) + 1)
+                        return false;
+
+                    ret = disruptor_->buffer_[this->limit_];
+                    limit_.fetch_add(1);
+                    return true;
+                }
+
+                ~reader()
+                {
+                    disruptor_->mutex_.lock();
+                    disruptor_->reader_list_.erase(this_it_);
+                    disruptor_->mutex_.unlock();
+                }
+            };
+
+        private:
+            friend reader;
+
+            detail::ring_buffer<T_, SIZE_> buffer_;
+            detail::ring_buffer<std::atomic<size_t>, SIZE_> readable_flag_;
+
+            alignas(64) std::atomic<size_t> writable_limit_ = 0;
+
+            std::shared_mutex mutex_;
+            std::list<reader *> reader_list_;
+
+            bool min_index(size_t index)
+            {
+                this->mutex_.lock_shared();
+                for (auto &it : this->reader_list_)
+                {
+                    if (index >= it->limit_ + SIZE_)
+                    {
+                        this->mutex_.unlock_shared();
+                        return false;
+                    }
+                }
+
+                this->mutex_.unlock_shared();
+                return true;
             }
 
         public:
-            void pull(T &ret)
+            struct context
             {
-                //等待数据可读
-                while (queue->readable_flag[this->limit].load() != (limit / SIZE) + 1)
-                    ;
+                bool flag = true;
+                size_t index = 0;
+            };
 
-                ret = queue->buffer[this->limit.load()];
-                limit.fetch_add(1);
+            disruptor()
+            {
+                for (size_t i = 0; i < SIZE_; i++)
+                {
+                    readable_flag_[i] = 0;
+                }
             }
 
-            bool try_pull(T &ret)
+            reader *make_reader()
             {
-                //等待数据可读
-                while (queue->readable_flag[this->limit].load() != (limit / SIZE) + 1)
-                    return false;
+                this->mutex_.lock();
+                this->reader_list_.push_back(NULL);
+                this->reader_list_.back() = new reader(this, --this->reader_list_.end());
+                this->mutex_.unlock();
+                return this->reader_list_.back();
+            }
 
-                ret = queue->buffer[this->limit.load()];
-                limit.fetch_add(1);
+            void push(const T_ &val)
+            {
+                size_t index = this->writable_limit_.fetch_add(1);
+
+                //等待可写
+                while (!this->min_index(index))
+                    std::this_thread::yield();
+
+                this->buffer_[index] = val;
+                this->readable_flag_[index] = (index / SIZE_) + 1;
+            }
+
+            bool try_push(const T_ &val, context &context)
+            {
+                bool &flag = context.flag;
+
+                size_t &index = context.index;
+
+                if (flag == true)
+                {
+                    index = this->writable_limit.fetch_add(1);
+                }
+
+                //等待可写
+                if (!this->min_index(index))
+                {
+                    flag = false;
+                    return false;
+                }
+
+                this->buffer[index] = val;
+                this->readable_flag[index] = (index / SIZE_) + 1;
+
+                flag = true;
                 return true;
             }
         };
-
-    private:
-        friend reader;
-
-        detail::ring_buffer<T, SIZE> buffer;
-        detail::ring_buffer<std::atomic<uint64_t>, SIZE> readable_flag;
-
-        alignas(64) std::atomic<uint64_t> writable_limit = 0;
-        alignas(64) std::atomic<uint64_t> reader_count = 0;
-
-        reader reader_list[READER_NUM];
-
-        bool min_index(size_t index)
-        {
-            for (size_t i = 0; i < this->reader_count.load(); i++)
-            {
-                if (index >= this->reader_list[i].limit.load() + SIZE)
-                    return false;
-            }
-            return true;
-        }
-
-    public:
-        disruptor()
-        {
-        }
-
-        reader *make_reader()
-        {
-            assert(this->reader_count.load() != READER_NUM);
-            auto index = this->reader_count.fetch_add(1);
-
-            return new (&reader_list[index]) reader(this);
-        }
-
-        void push(const T &val)
-        {
-            size_t index = this->writable_limit.fetch_add(1);
-
-            //等待可写
-            while (!this->min_index(index))
-                std::this_thread::yield();
-
-            this->buffer[index] = val;
-            this->readable_flag[index].store((index / SIZE) + 1, std::memory_order_release);
-        }
-
-        bool try_push(const T &val)
-        {
-            thread_local bool flag = true;
-
-            thread_local size_t index;
-
-            if (flag == true)
-            {
-                index = this->writable_limit.fetch_add(1);
-            }
-
-            //等待可写
-            if (!this->min_index(index))
-            {
-                flag = false;
-                return false;
-            }
-
-            this->buffer[index] = val;
-            this->readable_flag[index].store((index / SIZE) + 1, std::memory_order_release);
-
-            flag = true;
-            return true;
-        }
-    };
-} // namespace libcpp
+    } // namespace parallelism
+} // namespace mio
