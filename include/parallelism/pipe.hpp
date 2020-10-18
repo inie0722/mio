@@ -16,8 +16,8 @@ namespace mio
         private:
             alignas(64) char buffer_[SIZE_];
 
-            alignas(64) std::atomic<size_t> readable_limit_;
-            alignas(64) std::atomic<size_t> writable_limit_;
+            alignas(64) std::atomic<size_t> readable_limit_ = 0;
+            alignas(64) std::atomic<size_t> writable_limit_ = 0;
 
             size_t get_index(size_t index)
             {
@@ -65,7 +65,9 @@ namespace mio
             }
 
         public:
-            pipe() : readable_limit_(0), writable_limit_(0){};
+            pipe()
+            {
+            }
 
             pipe(const pipe &) = delete;
             pipe(const pipe &&) = delete;
