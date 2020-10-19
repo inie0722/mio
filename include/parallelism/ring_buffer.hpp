@@ -33,12 +33,12 @@ namespace mio
 
             T & operator[](size_t index)
             {
-                return buffer_[index];
+                return buffer_[writable_limit_ - index];
             }
 
             size_t size() const
             {
-                return writable_limit_.load();
+                return writable_limit_;
             }
         };
     }
