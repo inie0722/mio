@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <vector>
 
 namespace mio
 {
@@ -8,24 +9,45 @@ namespace mio
     {
         namespace detail
         {
-            template <typename T_, size_t SIZE_>
+            template <typename T_, class Container_ = std::vector<T_>>
             class ring_buffer
             {
-            private:
-                struct
-                {
-                    alignas(64) T_ data;
-                } array[SIZE_];
+            public:
+                typedef Container_<T_> container_type;
 
-                size_t get_index(const size_t index) const
+                typedef typename container_type::value_type value_type;
+                typedef typename container_type::size_type size_type;
+                typedef typename container_type::reference reference;
+                typedef typename container_type::const_reference const_reference;
+
+            private:
+                alignas(64) container_type c;
+
+                size_t get_index(size_t index) const
                 {
-                    return index % SIZE_;
+                    return index % c.size();
+                }
+
+            protected:
+                T_ &operator[](size_t index)
+                {
+                    return this->c[get_index(index)];
+                }
+
+                const T_ &operator[](size_t index) const
+                {
+                    return this->c[get_index(index)];
                 }
 
             public:
-                T_ &operator[](const size_t index)
+                container_type &get_container()
                 {
-                    return this->array[get_index(index)].data;
+                    return this->c;
+                }
+
+                const container_type &get_container() const
+                {
+                    return this->c;
                 }
             };
         } // namespace detail
