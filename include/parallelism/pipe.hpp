@@ -20,14 +20,15 @@ namespace mio
         {
         public:
             typedef Container_ container_type;
-        
+
             typedef typename container_type::value_type value_type;
             typedef typename container_type::size_type size_type;
             typedef typename container_type::reference reference;
             typedef typename container_type::const_reference const_reference;
+
         protected:
             alignas(64) container_type c;
-            
+
         private:
             alignas(64) std::atomic<size_t> readable_limit_ = 0;
             alignas(64) std::atomic<size_t> writable_limit_ = 0;
@@ -42,7 +43,6 @@ namespace mio
                 return index % get_size();
             }
 
-            
             bool is_can_write(size_t count) const
             {
                 auto size = get_size();
@@ -95,17 +95,17 @@ namespace mio
             {
             }
 
-            template<typename... Args>
-            pipe(Args&&... args): c(std::forward<Args...>(args)...)
+            template <typename... Args>
+            pipe(Args &&... args) : c(std::forward<Args...>(args)...)
             {
             }
 
-            pipe(const pipe & other)
+            pipe(const pipe &other)
             {
                 *this = other;
             }
 
-            pipe(pipe && other)
+            pipe(pipe &&other)
             {
                 *this = other;
             }
@@ -125,18 +125,18 @@ namespace mio
                 this->writable_limit_ = other.writable_limit_.load();
             }
 
-            container_type& get_container()
+            container_type &get_container()
             {
                 return this->c;
             }
 
-            const container_type& get_container() const
+            const container_type &get_container() const
             {
                 return this->c;
             }
 
             template <typename InputIt>
-            void write(InputIt first, size_t count, const wait::handler_t & handler = wait::yield)
+            void write(InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
             {
                 //等待可写
                 for (size_t i = 0; !is_can_write(count); i++)
@@ -157,7 +157,7 @@ namespace mio
             }
 
             template <typename OutputIt>
-            void read(OutputIt result, size_t count, const wait::handler_t & handler = wait::yield)
+            void read(OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
             {
                 //等待可读
                 for (size_t i = 0; !is_can_read(count); i++)
