@@ -178,7 +178,7 @@ namespace mio
 
             bool empty() const
             {
-                return c.empty();
+                return !this->size();
             }
 
             bool is_lock_free() const
