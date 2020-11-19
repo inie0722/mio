@@ -15,7 +15,7 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, class Container_ = std::vector<T_>>
+        template <typename T_, typename Container_ = std::vector<T_>>
         class pipe
         {
         public:
@@ -33,19 +33,14 @@ namespace mio
             alignas(64) std::atomic<size_t> readable_limit_ = 0;
             alignas(64) std::atomic<size_t> writable_limit_ = 0;
 
-            size_t get_size() const
-            {
-                return c.size();
-            }
-
             size_t get_index(size_t index) const
             {
-                return index % get_size();
+                return index % c.size();
             }
 
             bool is_can_write(size_t count) const
             {
-                auto size = get_size();
+                auto size = c.size();
                 return !(readable_limit_ + size < writable_limit_ + count);
             }
 
@@ -57,7 +52,7 @@ namespace mio
             template <typename InputIt>
             void __write(InputIt first, size_t count)
             {
-                auto size = get_size();
+                auto size = c.size();
 
                 if ((writable_limit_ % size) + count > size)
                 {
@@ -75,7 +70,7 @@ namespace mio
             template <typename OutputIt>
             void __read(OutputIt result, size_t count)
             {
-                auto size = get_size();
+                auto size = c.size();
 
                 if ((readable_limit_ % size) + count > size)
                 {
