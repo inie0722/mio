@@ -5,63 +5,89 @@
 
 #include <atomic>
 #include <thread>
+#include <utility>
+#include <vector>
+#include <algorithm>
+
+#include "parallelism/wait.hpp"
 
 namespace mio
 {
     namespace parallelism
     {
-        template <size_t SIZE_ = 4096>
+        template <typename T_, class Container_ = std::vector<T_>>
         class pipe
         {
+        public:
+            typedef Container_ container_type;
+        
+            typedef typename container_type::value_type value_type;
+            typedef typename container_type::size_type size_type;
+            typedef typename container_type::reference reference;
+            typedef typename container_type::const_reference const_reference;
+        protected:
+            alignas(64) container_type c;
+            
         private:
-            alignas(64) char buffer_[SIZE_];
-
             alignas(64) std::atomic<size_t> readable_limit_ = 0;
             alignas(64) std::atomic<size_t> writable_limit_ = 0;
 
-            size_t get_index(size_t index)
+            size_t get_size() const
             {
-                return index % SIZE_;
+                return c.size();
             }
 
-            void __sned(const void *data, size_t size)
+            size_t get_index(size_t index) const
             {
-                if ((writable_limit_ % SIZE_) + size > SIZE_)
+                return index % get_size();
+            }
+
+            
+            bool is_can_write(size_t count) const
+            {
+                auto size = get_size();
+                return !(readable_limit_ + size < writable_limit_ + count);
+            }
+
+            bool is_can_read(size_t count) const
+            {
+                return !(readable_limit_ + count > writable_limit_);
+            }
+
+            template <typename InputIt>
+            void __write(InputIt first, size_t count)
+            {
+                auto size = get_size();
+
+                if ((writable_limit_ % size) + count > size)
                 {
-                    auto len = SIZE_ - (writable_limit_ % SIZE_);
-                    memcpy(&this->buffer_[get_index(writable_limit_)], data, len);
-                    memcpy(&this->buffer_[get_index(writable_limit_ + len)], (char *)data + len, size - len);
+                    auto len = size - (writable_limit_ % size);
+                    std::copy_n(first, len, this->c.begin() + get_index(writable_limit_));
+                    std::copy_n(first + len, count - len, this->c.begin() + get_index(writable_limit_ + len));
                 }
                 else
                 {
-                    memcpy(&this->buffer_[get_index(writable_limit_)], data, size);
+                    std::copy_n(first, count, this->c.begin() + get_index(writable_limit_));
                 }
-                writable_limit_ += size;
+                writable_limit_ += count;
             }
 
-            void __recv(void *data, size_t size)
+            template <typename OutputIt>
+            void __read(OutputIt result, size_t count)
             {
-                if ((readable_limit_ % SIZE_) + size > SIZE_)
+                auto size = get_size();
+
+                if ((readable_limit_ % size) + count > size)
                 {
-                    auto len = SIZE_ - (readable_limit_ % SIZE_);
-                    memcpy(data, &this->buffer_[get_index(readable_limit_)], len);
-                    memcpy((char *)data + len, &this->buffer_[get_index(readable_limit_ + len)], size - len);
+                    auto len = size - (readable_limit_ % size);
+                    std::copy_n(this->c.begin() + get_index(readable_limit_), len, result);
+                    std::copy_n(this->c.begin() + get_index(readable_limit_ + len), count - len, result + len);
                 }
                 else
                 {
-                    memcpy(data, &this->buffer_[get_index(readable_limit_)], size);
+                    std::copy_n(this->c.begin() + get_index(readable_limit_), count, result);
                 }
-                readable_limit_ += size;
-            }
-
-            bool is_can_send(size_t size)
-            {
-                return !(readable_limit_ + SIZE_ < writable_limit_ + size);
-            }
-
-            bool is_can_recv(size_t size)
-            {
-                return !(readable_limit_ + size > writable_limit_);
+                readable_limit_ += count;
             }
 
         public:
@@ -69,50 +95,100 @@ namespace mio
             {
             }
 
-            pipe(const pipe &) = delete;
-            pipe(const pipe &&) = delete;
-            pipe &operator=(const pipe &) = delete;
-
-            void send(const void *data, size_t size)
+            template<typename... Args>
+            pipe(Args&&... args): c(std::forward<Args...>(args)...)
             {
-                //等待可写
-                while (!is_can_send(size))
-                    std::this_thread::yield();
-
-                __sned(data, size);
             }
 
-            bool try_send(const void *data, size_t size)
+            pipe(const pipe & other)
+            {
+                *this = other;
+            }
+
+            pipe(pipe && other)
+            {
+                *this = other;
+            }
+
+            pipe &operator=(const pipe &other)
+            {
+                this->c = other.c;
+                this->readable_limit_ = other.readable_limit_.load();
+                this->writable_limit_ = other.writable_limit_.load();
+            }
+
+            pipe &operator=(pipe &&other)
+            {
+                this->c = std::move(other.c);
+
+                this->readable_limit_ = other.readable_limit_.load();
+                this->writable_limit_ = other.writable_limit_.load();
+            }
+
+            container_type& get_container()
+            {
+                return this->c;
+            }
+
+            const container_type& get_container() const
+            {
+                return this->c;
+            }
+
+            template <typename InputIt>
+            void write(InputIt first, size_t count, const wait::handler_t & handler = wait::yield)
             {
                 //等待可写
-                if (!is_can_send(size))
+                for (size_t i = 0; !is_can_write(count); i++)
+                    handler(i);
+
+                __write(first, count);
+            }
+
+            template <typename InputIt>
+            bool try_write(InputIt first, size_t count)
+            {
+                //等待可写
+                if (!is_can_write(count))
                     return false;
 
-                __sned(data, size);
+                __write(first, count);
                 return true;
             }
 
-            void recv(void *data, size_t size)
+            template <typename OutputIt>
+            void read(OutputIt result, size_t count, const wait::handler_t & handler = wait::yield)
             {
                 //等待可读
-                while (!is_can_recv(size))
-                    std::this_thread::yield();
+                for (size_t i = 0; !is_can_read(count); i++)
+                    handler(i);
 
-                __recv(data, size);
+                __read(result, count);
             }
 
-            bool try_recv(void *data, size_t size)
+            template <typename OutputIt>
+            bool try_read(OutputIt result, size_t count)
             {
-                if (!is_can_recv(size))
+                if (!is_can_read(count))
                     return false;
 
-                __recv(data, size);
+                __read(result, count);
                 return true;
             }
 
             size_t size() const
             {
                 return writable_limit_ - readable_limit_;
+            }
+
+            bool empty() const
+            {
+                return c.empty();
+            }
+
+            bool is_lock_free() const
+            {
+                return true;
             }
         };
     } // namespace parallelism

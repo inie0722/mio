@@ -20,7 +20,9 @@ public:
     template <size_t DATA_SIZE_>
     void run_one()
     {
-        mio::parallelism::pipe<BUF_SIZE> pipe;
+        mio::parallelism::pipe<char> pipe(BUF_SIZE);
+        pipe.get_container().resize(4096);
+
         size_t array[SIZE] = {0};
 
         std::chrono::nanoseconds write_diff;
@@ -38,7 +40,7 @@ public:
                 for (size_t i = 0; i < SIZE; i++)
                 {
                     *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)] = i;
-                    pipe.send(data, sizeof(data));
+                    pipe.write(data, sizeof(data));
                 }
                 auto end = std::chrono::steady_clock::now();
                 write_diff = end - start;
@@ -53,7 +55,7 @@ public:
                 auto start = std::chrono::steady_clock::now();
                 for (size_t i = 0; i < SIZE; i++)
                 {
-                    pipe.recv(data, sizeof(data));
+                    pipe.read(data, sizeof(data));
                     size_t index = *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)];
                     array[index]++;
                 }
