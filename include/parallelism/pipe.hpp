@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <tuple>
 #include <functional>
+#include <limits>
 
 #include "parallelism/utility.hpp"
 
@@ -17,7 +18,7 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, template <typename> typename Container_>
+        template <typename T_, size_t Extent, template <typename> typename Container_>
         class pipe
         {
         public:
@@ -96,13 +97,15 @@ namespace mio
             }
 
         public:
-            pipe()
-            {
-            }
+            pipe() = default;
 
             template <typename... Args>
-            pipe(Args &&... args) : c(std::forward<Args...>(args)...)
+            pipe(size_t size, Args &&... args) : c(std::forward<Args...>(args)...)
             {
+                if constexpr(Extent == dynamic_extent)
+                {
+                    c.resize(size);
+                }
             }
 
             pipe(const pipe &other)
@@ -178,7 +181,10 @@ namespace mio
 
             void resize(size_t count)
             {
-                c.resize(count);
+                if constexpr(Extent == std::numeric_limits<std::size_t>::max())
+                {
+                    c.resize(count);
+                }
             }
 
             bool empty() const

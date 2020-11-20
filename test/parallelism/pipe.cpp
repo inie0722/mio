@@ -17,7 +17,7 @@ constexpr size_t THREAD_READ_NUM = 1;
 #include <vector>
 
 template <typename T>
-using array = std::vector<T>;
+using array = std::array<T, 4096>;
 
 class verify
 {
@@ -25,7 +25,7 @@ public:
     template <size_t DATA_SIZE_>
     void run_one()
     {
-        mio::parallelism::pipe<std::array<char, DATA_SIZE_>, array> pipe;
+        mio::parallelism::pipe<std::array<char, DATA_SIZE_>, 4096, array> pipe(4096);
         pipe.resize(BUF_SIZE);
 
         size_t array[SIZE] = {0};
