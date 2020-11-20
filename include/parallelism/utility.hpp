@@ -16,5 +16,13 @@ namespace mio
             inline auto active = [](size_t) {};
             inline auto yield = [](size_t) { std::this_thread::yield(); };
         } // namespace wait
-    }     // namespace parallelism
+
+        constexpr size_t CACHE_LINE = 64;
+
+        template <typename T>
+        struct alignas(CACHE_LINE) alignas_t
+        {
+            T value;
+        };
+    } // namespace parallelism
 } // namespace mio
