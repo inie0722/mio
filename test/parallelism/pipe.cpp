@@ -14,14 +14,19 @@ constexpr size_t THREAD_WRITE_NUM = 1;
 
 constexpr size_t THREAD_READ_NUM = 1;
 
+#include <vector>
+
+template <typename T>
+using array = std::vector<T>;
+
 class verify
 {
 public:
     template <size_t DATA_SIZE_>
     void run_one()
     {
-        mio::parallelism::pipe<char> pipe(BUF_SIZE);
-        pipe.get_container().resize(4096);
+        mio::parallelism::pipe<std::array<char, DATA_SIZE_>, array> pipe;
+        pipe.resize(BUF_SIZE);
 
         size_t array[SIZE] = {0};
 
@@ -34,13 +39,13 @@ public:
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
         {
             write_thread[i] = std::thread([&]() {
-                char data[DATA_SIZE_];
+                std::array<char, DATA_SIZE_> data;
 
                 auto start = std::chrono::steady_clock::now();
                 for (size_t i = 0; i < SIZE; i++)
                 {
                     *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)] = i;
-                    pipe.write(data, sizeof(data));
+                    pipe.write(&data, 1);
                 }
                 auto end = std::chrono::steady_clock::now();
                 write_diff = end - start;
@@ -50,12 +55,12 @@ public:
         for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
             read_thread[i] = std::thread([&]() {
-                char data[DATA_SIZE_];
+                std::array<char, DATA_SIZE_> data;
 
                 auto start = std::chrono::steady_clock::now();
                 for (size_t i = 0; i < SIZE; i++)
                 {
-                    pipe.read(data, sizeof(data));
+                    pipe.read(&data, 1);
                     size_t index = *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)];
                     array[index]++;
                 }

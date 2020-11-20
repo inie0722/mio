@@ -8,30 +8,40 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
+#include <tuple>
+#include <functional>
 
-#include "parallelism/wait.hpp"
+#include "parallelism/utility.hpp"
 
 namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, typename Container_ = std::vector<T_>>
+        template <typename T_, template <typename> typename Container_>
         class pipe
         {
         public:
-            typedef Container_ container_type;
+            template <typename T__>
+            using container_type = Container_<T__>;
 
-            typedef typename container_type::value_type value_type;
-            typedef typename container_type::size_type size_type;
-            typedef typename container_type::reference reference;
-            typedef typename container_type::const_reference const_reference;
+            template <typename T__>
+            using value_type = typename container_type<T__>::value_type;
+
+            template <typename T__>
+            using size_type = typename container_type<T__>::size_type;
+
+            template <typename T__>
+            using reference = typename container_type<T__>::reference;
+
+            template <typename T__>
+            using const_reference = typename container_type<T__>::const_reference;
 
         protected:
-            alignas(64) container_type c;
+            alignas(CACHE_LINE) container_type<T_> c;
 
         private:
-            alignas(64) std::atomic<size_t> readable_limit_ = 0;
-            alignas(64) std::atomic<size_t> writable_limit_ = 0;
+            alignas(CACHE_LINE) std::atomic<size_t> readable_limit_ = 0;
+            alignas(CACHE_LINE) std::atomic<size_t> writable_limit_ = 0;
 
             size_t get_index(size_t index) const
             {
@@ -120,16 +130,6 @@ namespace mio
                 this->writable_limit_ = other.writable_limit_.load();
             }
 
-            container_type &get_container()
-            {
-                return this->c;
-            }
-
-            const container_type &get_container() const
-            {
-                return this->c;
-            }
-
             template <typename InputIt>
             void write(InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
             {
@@ -176,6 +176,11 @@ namespace mio
                 return writable_limit_ - readable_limit_;
             }
 
+            void resize(size_t count)
+            {
+                c.resize(count);
+            }
+
             bool empty() const
             {
                 return !this->size();
@@ -184,6 +189,16 @@ namespace mio
             bool is_lock_free() const
             {
                 return true;
+            }
+
+            auto get_container()
+            {
+                return std::make_tuple(std::ref(this->c));
+            }
+
+            const auto get_container() const
+            {
+                return std::make_tuple(std::cref(this->c));
             }
         };
     } // namespace parallelism

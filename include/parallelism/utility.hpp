@@ -23,6 +23,11 @@ namespace mio
         struct alignas(SIZE) alignas_t
         {
             T value;
+
+            operator T()
+            {
+                return value;
+            }
         };
     } // namespace parallelism
 } // namespace mio
