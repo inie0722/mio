@@ -1,5 +1,7 @@
 #pragma once
 
+#include "parallelism/detail/ring_buffer.hpp"
+
 #include <stddef.h>
 
 #include <atomic>
@@ -10,20 +12,10 @@ namespace mio
     namespace parallelism
     {
         template <typename T_, typename Container_ = std::vector<T_>>
-        class ring_buffer
+        class ring_buffer : public detail::ring_buffer<T_, Container_>
         {
-        public:
-            typedef Container_ container_type;
-
-            typedef typename container_type::value_type value_type;
-            typedef typename container_type::size_type size_type;
-            typedef typename container_type::reference reference;
-            typedef typename container_type::const_reference const_reference;
-
-        protected:
-            alignas(64) container_type c;
-
         private:
+            typedef detail::ring_buffer<T_, Container_> base_t;
             //可写界限
             alignas(64) std::atomic<size_t> writable_limit_ = 0;
 
@@ -33,7 +25,7 @@ namespace mio
             }
 
             template <typename... Args>
-            ring_buffer(Args &&... args) : c(std::forward<Args...>(args)...)
+            ring_buffer(Args &&... args) : base_t(std::forward<Args...>(args)...)
             {
             }
 
@@ -49,35 +41,19 @@ namespace mio
 
             ring_buffer &operator=(const ring_buffer &other)
             {
-                this->c = other.c;
+                static_cast<base_t &>(*this) = other;
                 this->writable_limit_ = other.writable_limit_.load();
+                return *this;
             }
 
             ring_buffer &operator=(ring_buffer &&other)
             {
-                this->c = std::move(other.c);
+                static_cast<base_t &>(*this) = other;
                 this->writable_limit_ = other.writable_limit_.load();
+                return *this;
             }
 
-            T_ &operator[](size_t index)
-            {
-                return c[writable_limit_ - index];
-            }
-
-            const T_ &operator[](size_t index) const
-            {
-                return c[writable_limit_ - index];
-            }
-
-            container_type &get_container()
-            {
-                return this->c;
-            }
-
-            const container_type &get_container() const
-            {
-                return this->c;
-            }
+            using base_t::operator[];
 
             void push(const T_ &val)
             {
@@ -100,7 +76,7 @@ namespace mio
 
             bool empty() const
             {
-                return !c.empty();
+                return !this->size();
             }
 
             bool is_lock_free() const
