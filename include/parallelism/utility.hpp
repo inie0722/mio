@@ -19,8 +19,8 @@ namespace mio
 
         constexpr size_t CACHE_LINE = 64;
 
-        template <typename T>
-        struct alignas(CACHE_LINE) alignas_t
+        template <typename T, size_t SIZE>
+        struct alignas(SIZE) alignas_t
         {
             T value;
         };

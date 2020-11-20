@@ -29,17 +29,6 @@ namespace mio
                     return index % c.size();
                 }
 
-            protected:
-                            T_ &operator[](size_t index)
-                {
-                    return this->c[get_index(index)];
-                }
-
-                const T_ &operator[](size_t index) const
-                {
-                    return this->c[get_index(index)];
-                }
-
             public:
                 ring_buffer()
                 {
@@ -68,6 +57,16 @@ namespace mio
                 ring_buffer &operator=(ring_buffer &&other)
                 {
                     this->c = std::move(other.c);
+                }
+
+                T_ &operator[](size_t index)
+                {
+                    return this->c[get_index(index)];
+                }
+
+                const T_ &operator[](size_t index) const
+                {
+                    return this->c[get_index(index)];
                 }
 
                 container_type &get_container()

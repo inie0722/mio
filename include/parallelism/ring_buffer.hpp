@@ -53,8 +53,6 @@ namespace mio
                 return *this;
             }
 
-            using base_t::operator[];
-
             void push(const T_ &val)
             {
                 size_t index = this->writable_limit_;
