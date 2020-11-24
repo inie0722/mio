@@ -73,6 +73,21 @@ namespace mio
                 val = std::move(this->buffer_[index]);
                 writable_flag_[index] = (index / N_) + 1;
             }
+
+            size_t size() const
+            {
+                return writable_limit_ - readable_limit_;
+            }
+
+            bool empty() const
+            {
+                return !this->size();
+            }
+
+            bool is_lock_free() const
+            {
+                return true;
+            }
         };
     } // namespace parallelism
 } // namespace mio

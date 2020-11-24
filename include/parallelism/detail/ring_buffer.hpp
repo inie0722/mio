@@ -44,11 +44,13 @@ namespace mio
                 ring_buffer &operator=(const ring_buffer &other)
                 {
                     this->c = other.c;
+                    return *this;
                 }
 
                 ring_buffer &operator=(ring_buffer &&other)
                 {
                     this->c = std::move(other.c);
+                    return *this;
                 }
 
                 T_ &operator[](size_t index)
