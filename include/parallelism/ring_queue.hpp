@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parallelism/detail/ring_buffer.hpp"
+#include "parallelism/utility.hpp"
 
 #include <stddef.h>
 
@@ -11,108 +12,64 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t SIZE_ = 4096>
+        template <typename T_, size_t N_ = 4096>
         class ring_queue
         {
         private:
-            detail::ring_buffer<T_, SIZE_> buffer_;
+            detail::ring_buffer<T_, N_> buffer_;
 
             //可读可写标志
-            detail::ring_buffer<std::atomic<size_t>, SIZE_> readable_flag_;
-            detail::ring_buffer<std::atomic<size_t>, SIZE_> writable_flag_;
+            detail::ring_buffer<std::atomic<size_t>, N_> readable_flag_;
+            detail::ring_buffer<std::atomic<size_t>, N_> writable_flag_;
 
             //可读可写界限
-            alignas(64) std::atomic<size_t> readable_limit_ = 0;
-            alignas(64) std::atomic<size_t> writable_limit_ = 0;
+            alignas(CACHE_LINE) std::atomic<size_t> readable_limit_ = 0;
+            alignas(CACHE_LINE) std::atomic<size_t> writable_limit_ = 0;
 
         public:
-            struct context
-            {
-                bool flag = true;
-                size_t index = 0;
-            };
-
             ring_queue()
             {
-                for (size_t i = 0; i < SIZE_; i++)
+                for (size_t i = 0; i < N_; i++)
                 {
                     readable_flag_[i] = 0;
                     writable_flag_[i] = 0;
                 }
             }
 
-            void push(const T_ &val)
+            void push(const T_ &val, const wait::handler_t &handler = wait::yield)
             {
                 size_t index = this->writable_limit_.fetch_add(1);
 
                 //等待可写
-                while (writable_flag_[index] != index / SIZE_)
-                    std::this_thread::yield();
+                for (size_t i = 0; writable_flag_[index] != index / N_; i++)
+                    handler(i);
 
                 this->buffer_[index] = val;
-                readable_flag_[index] = (index / SIZE_) + 1;
+                readable_flag_[index] = (index / N_) + 1;
             }
 
-            bool try_push(const T_ &val, context &context)
+            void push(T_ &&val, const wait::handler_t &handler = wait::yield)
             {
-                bool &flag = context.flag;
-
-                size_t &index = context.index;
-
-                if (flag == true)
-                {
-                    index = this->writable_limit_.fetch_add(1);
-                }
+                size_t index = this->writable_limit_.fetch_add(1);
 
                 //等待可写
-                if (writable_flag_[index] != index / SIZE_)
-                {
-                    flag = false;
-                    return false;
-                }
+                for (size_t i = 0; writable_flag_[index] != index / N_; i++)
+                    handler(i);
 
-                this->buffer_[index] = val;
-                readable_flag_[index] = (index / SIZE_) + 1;
-
-                flag = true;
-                return true;
+                this->buffer_[index] = std::move(val);
+                readable_flag_[index] = (index / N_) + 1;
             }
 
-            void pop(T_ &val)
+            void pop(T_ &val, const wait::handler_t &handler = wait::yield)
             {
                 size_t index = this->readable_limit_.fetch_add(1);
 
                 //等待可读
-                while (readable_flag_[index] != (index / SIZE_) + 1)
-                    std::this_thread::yield();
+                for (size_t i = 0; readable_flag_[index] != (index / N_) + 1; i++)
+                    handler(i);
 
-                val = this->buffer_[index];
-                writable_flag_[index] = (index / SIZE_) + 1;
-            }
-
-            bool try_pop(T_ &val, context &context)
-            {
-                bool &flag = context.flag;
-
-                size_t &index = context.index;
-
-                if (flag == true)
-                {
-                    index = this->readable_limit_.fetch_add(1);
-                }
-
-                //等待可读
-                if (readable_flag_[index] != (index / SIZE_) + 1)
-                {
-                    flag = false;
-                    return false;
-                }
-
-                val = this->buffer_[index];
-                writable_flag_[index] = (index / SIZE_) + 1;
-
-                flag = true;
-                return true;
+                val = std::move(this->buffer_[index]);
+                writable_flag_[index] = (index / N_) + 1;
             }
         };
     } // namespace parallelism
