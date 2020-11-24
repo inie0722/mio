@@ -4,13 +4,9 @@
 #include <string.h>
 
 #include <atomic>
-#include <thread>
+#include <array>
 #include <utility>
-#include <vector>
 #include <algorithm>
-#include <tuple>
-#include <functional>
-#include <limits>
 
 #include "parallelism/utility.hpp"
 
@@ -18,29 +14,12 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t Extent, template <typename> typename Container_>
+        template <typename T_, size_t N_>
         class pipe
         {
-        public:
-            template <typename T__>
-            using container_type = Container_<T__>;
-
-            template <typename T__>
-            using value_type = typename container_type<T__>::value_type;
-
-            template <typename T__>
-            using size_type = typename container_type<T__>::size_type;
-
-            template <typename T__>
-            using reference = typename container_type<T__>::reference;
-
-            template <typename T__>
-            using const_reference = typename container_type<T__>::const_reference;
-
-        protected:
-            alignas(CACHE_LINE) container_type<T_> c;
-
         private:
+            alignas(CACHE_LINE) std::array<T_, N_> c;
+
             alignas(CACHE_LINE) std::atomic<size_t> readable_limit_ = 0;
             alignas(CACHE_LINE) std::atomic<size_t> writable_limit_ = 0;
 
@@ -98,15 +77,6 @@ namespace mio
 
         public:
             pipe() = default;
-
-            template <typename... Args>
-            pipe(size_t size, Args &&... args) : c(std::forward<Args...>(args)...)
-            {
-                if constexpr(Extent == dynamic_extent)
-                {
-                    c.resize(size);
-                }
-            }
 
             pipe(const pipe &other)
             {
@@ -179,14 +149,6 @@ namespace mio
                 return writable_limit_ - readable_limit_;
             }
 
-            void resize(size_t count)
-            {
-                if constexpr(Extent == std::numeric_limits<std::size_t>::max())
-                {
-                    c.resize(count);
-                }
-            }
-
             bool empty() const
             {
                 return !this->size();
@@ -195,16 +157,6 @@ namespace mio
             bool is_lock_free() const
             {
                 return true;
-            }
-
-            auto get_container()
-            {
-                return std::make_tuple(std::ref(this->c));
-            }
-
-            const auto get_container() const
-            {
-                return std::make_tuple(std::cref(this->c));
             }
         };
     } // namespace parallelism
