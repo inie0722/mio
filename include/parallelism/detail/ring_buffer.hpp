@@ -1,7 +1,10 @@
 #pragma once
 
+#include "parallelism/utility.hpp"
+
 #include <stddef.h>
-#include <vector>
+
+#include <array>
 
 namespace mio
 {
@@ -9,35 +12,19 @@ namespace mio
     {
         namespace detail
         {
-            template <typename T_, class Container_ = std::vector<T_>>
+            template <typename T_, size_t N_ = 4096>
             class ring_buffer
             {
-            public:
-                typedef Container_ container_type;
-
-                typedef typename container_type::value_type value_type;
-                typedef typename container_type::size_type size_type;
-                typedef typename container_type::reference reference;
-                typedef typename container_type::const_reference const_reference;
-
-            protected:
-                alignas(64) container_type c;
-
             private:
+                alignas(CACHE_LINE) std::array<T_, N_> c;
+
                 size_t get_index(size_t index) const
                 {
                     return index % c.size();
                 }
 
             public:
-                ring_buffer()
-                {
-                }
-
-                template <typename... Args>
-                ring_buffer(Args &&... args) : c(std::forward<Args...>(args)...)
-                {
-                }
+                ring_buffer() = default;
 
                 ring_buffer(const ring_buffer &other)
                 {
@@ -69,14 +56,9 @@ namespace mio
                     return this->c[get_index(index)];
                 }
 
-                container_type &get_container()
+                size_t size() const
                 {
-                    return this->c;
-                }
-
-                const container_type &get_container() const
-                {
-                    return this->c;
+                    return c.size();
                 }
             };
         } // namespace detail

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "parallelism/utility.hpp"
+
 #include <stddef.h>
 #include <string.h>
 
@@ -8,13 +10,11 @@
 #include <utility>
 #include <algorithm>
 
-#include "parallelism/utility.hpp"
-
 namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t N_>
+        template <typename T_, size_t N_ = 4096>
         class pipe
         {
         private:
