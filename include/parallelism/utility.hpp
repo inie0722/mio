@@ -18,18 +18,5 @@ namespace mio
         } // namespace wait
 
         inline constexpr size_t CACHE_LINE = 64;
-
-        template <typename T, size_t SIZE>
-        struct alignas(SIZE) alignas_t
-        {
-            T value;
-
-            operator T()
-            {
-                return value;
-            }
-        };
-
-        inline constexpr size_t dynamic_extent = std::numeric_limits<std::size_t>::max();
     } // namespace parallelism
 } // namespace mio

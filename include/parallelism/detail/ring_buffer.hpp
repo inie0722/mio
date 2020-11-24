@@ -16,7 +16,12 @@ namespace mio
             class ring_buffer
             {
             private:
-                alignas(CACHE_LINE) std::array<T_, N_> c;
+                struct alignas(CACHE_LINE) alignas_t
+                {
+                    T_ value;
+                };
+
+                alignas(CACHE_LINE) std::array<alignas_t, N_> c;
 
                 size_t get_index(size_t index) const
                 {
@@ -48,12 +53,12 @@ namespace mio
 
                 T_ &operator[](size_t index)
                 {
-                    return this->c[get_index(index)];
+                    return this->c[get_index(index)].value;
                 }
 
                 const T_ &operator[](size_t index) const
                 {
-                    return this->c[get_index(index)];
+                    return this->c[get_index(index)].value;
                 }
 
                 size_t size() const
