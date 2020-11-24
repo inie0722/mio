@@ -1,29 +1,27 @@
-#include <iostream>
-
-using namespace std;
-#include "coroutine.hpp"
-
-void test(void *arg)
-{
-    auto co = (coroutine *)arg;
-    cout << "0x1" << endl;
-
-    cout << co->yeid((void *)0x2) << endl;
-    cout << "0x5" << endl;
-
-    co->yeid((void *)0x6);
-}
-
+#include "interprocess/acceptor.hpp"
 #include <thread>
 
-int main(void)
+int main()
 {
-    shared_ptr<char[]> buf(new char[1000 * 1000]);
+    boost::asio::io_context io_context;
+    mio::interprocess::acceptor acc(io_context);
+    acc.bind("127.0.0.1");
 
-    coroutine co(test, buf, 1000 * 1000);
-    cout << co.resume(&co) << endl;
-    cout << "0x3" << endl;
+    std::thread th([&](){
+        mio::interprocess::socket socket(io_context);
+        socket.connect("127.0.0.1");
 
-    cout << co.resume((void *)0x4) << endl;
+        char msg[10];
+        socket.read(msg, 10);
+
+        std::cout << msg << std::endl;
+    });
+
+    mio::interprocess::socket s(io_context);
+    acc.accept(s);
+
+    char msg[10] = "123456789";
+    s.write(msg, 10);
+    th.join();
     return 0;
 }

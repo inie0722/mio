@@ -6,60 +6,40 @@ namespace mio
 {
     namespace parallelism
     {
-        template <size_t SIZE_ = 4096>
+        template <typename T_, size_t N_ = 4096>
         class channel
         {
-        public:
-            class pipe
-            {
-            private:
-                friend channel;
-                channel *channel_;
-                size_t send_index_;
-                size_t recv_index_;
+        private:
+            mio::parallelism::pipe<T_, N_> pipe_[2];
 
-                pipe(channel *channel, bool flag) : channel_(channel)
+        public:
+                channel() = default;
+
+                template <typename InputIt>
+                void write(int fd, InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
                 {
-                    if (flag == true)
+                    if(fd)
                     {
-                        this->send_index_ = 0;
-                        this->recv_index_ = 1;
+                        this->pipe_[0].write(first, count, handler);
                     }
                     else
                     {
-                        this->send_index_ = 1;
-                        this->recv_index_ = 0;
+                        this->pipe_[1].write(first, count, handler);
                     }
-                };
-
-            public:
-                pipe(const pipe &other)
-                {
-                    this->channel_ = other.channel_;
-                    this->send_index_ = other.send_index_;
-                    this->recv_index_ = other.recv_index_;
                 }
 
-                void send(const void *data, size_t size)
+                template <typename OutputIt>
+                void read(int fd, OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
                 {
-                    this->channel_->pipe_[send_index_].send(data, size);
+                    if(fd)
+                    {
+                        this->pipe_[1].read(result, count, handler);
+                    }
+                    else
+                    {
+                        this->pipe_[0].read(result, count, handler);
+                    }
                 }
-
-                void recv(void *data, size_t size)
-                {
-                    this->channel_->pipe_[recv_index_].recv(data, size);
-                }
-            };
-
-        private:
-            friend pipe;
-            mio::parallelism::pipe<SIZE_> pipe_[2];
-
-        public:
-            pipe make_pipe(bool flag)
-            {
-                return pipe(this, flag);
-            }
         };
     } // namespace parallelism
 } // namespace mio
