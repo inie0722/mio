@@ -78,31 +78,6 @@ namespace mio
         public:
             pipe() = default;
 
-            pipe(const pipe &other)
-            {
-                *this = other;
-            }
-
-            pipe(pipe &&other)
-            {
-                *this = other;
-            }
-
-            pipe &operator=(const pipe &other)
-            {
-                this->c = other.c;
-                this->readable_limit_ = other.readable_limit_.load();
-                this->writable_limit_ = other.writable_limit_.load();
-            }
-
-            pipe &operator=(pipe &&other)
-            {
-                this->c = std::move(other.c);
-
-                this->readable_limit_ = other.readable_limit_.load();
-                this->writable_limit_ = other.writable_limit_.load();
-            }
-
             template <typename InputIt>
             void write(InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
             {
