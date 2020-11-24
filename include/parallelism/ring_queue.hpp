@@ -6,7 +6,9 @@
 #include <stddef.h>
 
 #include <atomic>
-#include <thread>
+#include <array>
+#include <utility>
+#include <algorithm>
 
 namespace mio
 {
