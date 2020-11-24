@@ -64,12 +64,12 @@ namespace mio
                 if ((readable_limit_ % size) + count > size)
                 {
                     auto len = size - (readable_limit_ % size);
-                    std::copy_n(this->c.begin() + get_index(readable_limit_), len, result);
-                    std::copy_n(this->c.begin() + get_index(readable_limit_ + len), count - len, result + len);
+                    std::copy_n(std::move_iterator(this->c.begin() + get_index(readable_limit_)), len, result);
+                    std::copy_n(std::move_iterator(this->c.begin() + get_index(readable_limit_ + len)), count - len, result + len);
                 }
                 else
                 {
-                    std::copy_n(this->c.begin() + get_index(readable_limit_), count, result);
+                    std::copy_n(std::move_iterator(this->c.begin() + get_index(readable_limit_)), count, result);
                 }
                 readable_limit_ += count;
             }
