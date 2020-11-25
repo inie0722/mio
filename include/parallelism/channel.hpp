@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdint.h>
+
+#include <atomic>
+
 #include "parallelism/pipe.hpp"
 
 namespace mio
@@ -9,36 +13,58 @@ namespace mio
         template <typename T_, size_t N_ = 4096>
         class channel
         {
+        public:
+            struct status_t
+            {
+                static constexpr uint8_t CONNECTED = 0;
+                static constexpr uint8_t DISCONNECTED = 1;
+            };
         private:
             mio::parallelism::pipe<T_, N_> pipe_[2];
-
+            std::atomic<uint8_t> status_ = status_t::CONNECTED;
         public:
                 channel() = default;
 
                 template <typename InputIt>
-                void write(int fd, InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
+                size_t write_some(bool fd, InputIt first, size_t count)
                 {
-                    if(fd)
-                    {
-                        this->pipe_[0].write(first, count, handler);
-                    }
-                    else
-                    {
-                        this->pipe_[1].write(first, count, handler);
-                    }
+                    return this->pipe_[fd ? 0 : 1].write_some(first, count);
                 }
 
                 template <typename OutputIt>
-                void read(int fd, OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
+                size_t read_some(bool fd, OutputIt result, size_t count)
                 {
-                    if(fd)
+                    return this->pipe_[fd ? 1 : 0].read_some(result, count);
+                }
+
+                template <typename InputIt>
+                size_t write(bool fd, InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
+                {
+                    auto callback = [&](size_t i)
                     {
-                        this->pipe_[1].read(result, count, handler);
-                    }
-                    else
-                    {
-                        this->pipe_[0].read(result, count, handler);
-                    }
+                        if(this->status_ == status_t::DISCONNECTED)
+                            throw std::runtime_error("The peer is disconnected");
+                        handler(i);
+                    };
+
+                    return this->pipe_[fd ? 0 : 1].write(first, count, callback);
+                }
+
+                template <typename OutputIt>
+                size_t read(bool fd, OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
+                {
+                    auto callback = [&](size_t i) {
+                        if (this->status_ == status_t::DISCONNECTED)
+                            throw std::runtime_error("The peer is disconnected");
+                        handler(i);
+                    };
+                    
+                    return this->pipe_[fd ? 1 : 0].read(result, count, callback);
+                }
+
+                void close()
+                {
+                    status_ = status_t::DISCONNECTED;
                 }
         };
     } // namespace parallelism
