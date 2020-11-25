@@ -25,7 +25,7 @@ namespace mio
             channel() = default;
 
             template <typename InputIt>
-            size_t write_some(bool fd, InputIt first, size_t count)
+            size_t write_some(bool fd, InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
             {
                 auto callback = [&](size_t i) {
                     if (this->status_ == DISCONNECTED)
@@ -36,7 +36,7 @@ namespace mio
             }
 
             template <typename OutputIt>
-            size_t read_some(bool fd, OutputIt result, size_t count)
+            size_t read_some(bool fd, OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
             {
                 auto callback = [&](size_t i) {
                     if (this->status_ == DISCONNECTED)

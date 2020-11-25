@@ -26,7 +26,7 @@ namespace mio
             parallelism::ring_queue<detail::request> *request_queue_;
 
         public:
-            acceptor(boost::asio::io_context &io_context):io_context_(io_context)
+            acceptor(boost::asio::io_context &io_context) : io_context_(io_context)
             {
             }
 
@@ -41,7 +41,7 @@ namespace mio
                 request_queue_ = shared_memory_->construct<std::remove_reference<decltype(*request_queue_)>::type>("request_queue")();
             }
 
-            void accept(socket & socket_)
+            void accept(socket &socket_)
             {
                 detail::request req;
                 request_queue_->pop(req);
@@ -49,12 +49,14 @@ namespace mio
                 new (&socket_) socket(io_context_, req.channel_ptr.get());
             }
 
-            /*
-            void async_accept()
+            void async_accept(socket &socket_, boost::asio::yield_context yield)
             {
+                detail::request req;
+                request_queue_->pop(req, [&](size_t) { this->io_context_.post(yield); });
 
+                new (&socket_) socket(io_context_, req.channel_ptr.get());
             }
-            */
+
             void close()
             {
                 using namespace boost::interprocess;

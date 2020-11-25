@@ -12,4 +12,4 @@ target_link_libraries(log pthread)
 
 add_executable(test test.cpp)
 
-target_link_libraries(test rt boost_system pthread)
+target_link_libraries(test rt boost_system pthread boost_coroutine)
