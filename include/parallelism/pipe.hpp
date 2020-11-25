@@ -67,12 +67,38 @@ namespace mio
             pipe() = default;
 
             template <typename InputIt>
-            size_t write_some(InputIt first, size_t count)
+            size_t write_some(InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
             {
-                auto size = write_size();
+                size_t size = 0;
+
+                for (size_t i = 0; !size; i++)
+                {
+                    size = write_size();
+                    if (!size)
+                        handler(i);
+                }
 
                 size = count <= size ? count : size;
                 __write(first, size);
+
+                return size;
+            }
+
+            template <typename OutputIt>
+            size_t read_some(OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
+            {
+
+                size_t size = 0;
+
+                for (size_t i = 0; !size; i++)
+                {
+                    size = read_size();
+                    if (!size)
+                        handler(i);
+                }
+
+                size = count <= size ? count : size;
+                __read(result, size);
 
                 return size;
             }
@@ -81,15 +107,9 @@ namespace mio
             size_t write(InputIt first, size_t count, const wait::handler_t &handler = wait::yield)
             {
                 //等待可写
-                for (size_t i = 0, c = 0; i < count;)
+                for (size_t i = 0; i < count;)
                 {
-                    size_t size = write_some(first + i, count - i);
-
-                    if (size < count - i)
-                    {
-                        handler(c);
-                        ++c;
-                    }
+                    size_t size = write_some(first + i, count - i, handler);
                     i += size;
                 }
 
@@ -97,28 +117,12 @@ namespace mio
             }
 
             template <typename OutputIt>
-            size_t read_some(OutputIt result, size_t count)
-            {
-                auto size = read_size();
-                size = count <= size ? count : size;
-                __read(result, size);
-
-                return size;
-            }
-
-            template <typename OutputIt>
             size_t read(OutputIt result, size_t count, const wait::handler_t &handler = wait::yield)
             {
                 //等待可读
-                for (size_t i = 0, c = 0; i < count;)
+                for (size_t i = 0; i < count;)
                 {
-                    size_t size = read_some(result + i, count - i);
-
-                    if (size < count - i)
-                    {
-                        handler(c);
-                        ++c;
-                    }
+                    size_t size = read_some(result + i, count - i, handler);
                     i += size;
                 }
 
