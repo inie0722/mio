@@ -41,49 +41,49 @@ namespace mio
                     socket_.async_connect(host.begin()->endpoint(), yield);
                 }
 
-                size_t write_some(const char *data, size_t size)
+                size_t write_some(const void *data, size_t size)
                 {
                     using namespace boost::asio;
                     return socket_.write_some(buffer(data, size));
                 }
 
-                size_t read_some(char *data, size_t size)
+                size_t read_some(void *data, size_t size)
                 {
                     using namespace boost::asio;
                     return socket_.read_some(buffer(data, size));
                 }
 
-                size_t async_write_some(const char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_write_some(const void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return socket_.async_write_some(buffer(data, size), yield);
                 }
 
-                size_t async_read_some(char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_read_some(void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return socket_.async_read_some(buffer(data, size), yield);
                 }
 
-                size_t write(const char *data, size_t size)
+                size_t write(const void *data, size_t size)
                 {
                     using namespace boost::asio;
                     return boost::asio::write(socket_, buffer(data, size));
                 }
 
-                size_t read(char *data, size_t size)
+                size_t read(void *data, size_t size)
                 {
                     using namespace boost::asio;
                     return boost::asio::read(socket_, buffer(data, size));
                 }
 
-                size_t async_write(const char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_write(const void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return boost::asio::async_write(socket_, buffer(data, size), yield);
                 }
 
-                size_t async_read(char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_read(void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return boost::asio::async_read(socket_, buffer(data, size), yield);

@@ -72,44 +72,44 @@ namespace mio
                     request_queue_->push(req, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                size_t write_some(const char *data, size_t size)
+                size_t write_some(const void *data, size_t size)
                 {
-                    return channel_->write_some(is_clinet, data, size);
+                    return channel_->write_some(is_clinet, (char*)data, size);
                 }
 
-                size_t read_some(char *data, size_t size)
+                size_t read_some(void *data, size_t size)
                 {
-                    return channel_->read_some(is_clinet, data, size);
+                    return channel_->read_some(is_clinet, (char*)data, size);
                 }
 
-                size_t async_write_some(const char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_write_some(const void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->write_some(is_clinet, data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->write_some(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                size_t async_read_some(char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_read_some(void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->read_some(is_clinet, data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->read_some(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                size_t write(const char *data, size_t size)
+                size_t write(const void *data, size_t size)
                 {
-                    return channel_->write(is_clinet, data, size);
+                    return channel_->write(is_clinet, (char*)data, size);
                 }
 
-                size_t read(char *data, size_t size)
+                size_t read(void *data, size_t size)
                 {
-                    return channel_->read(is_clinet, data, size);
+                    return channel_->read(is_clinet, (char*)data, size);
                 }
 
-                size_t async_write(const char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_write(const void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->write(is_clinet, data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->write(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                size_t async_read(char *data, size_t size, boost::asio::yield_context yield)
+                size_t async_read(void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->read(is_clinet, data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->read(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 void close()
