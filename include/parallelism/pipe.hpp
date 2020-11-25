@@ -27,16 +27,6 @@ namespace mio
                 return index % c.size();
             }
 
-            size_t write_size() const
-            {
-                return N_ - size();
-            }
-
-            size_t read_size() const
-            {
-                return size();
-            }
-
             template <typename InputIt>
             void __write(InputIt first, size_t count)
             {
@@ -148,6 +138,16 @@ namespace mio
             bool is_lock_free() const
             {
                 return true;
+            }
+
+            size_t write_size() const
+            {
+                return N_ - size();
+            }
+
+            size_t read_size() const
+            {
+                return size();
             }
         };
     } // namespace parallelism
