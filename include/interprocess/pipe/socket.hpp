@@ -29,7 +29,7 @@ namespace mio
                 boost::asio::io_context &io_context_;
 
                 std::unique_ptr<boost::interprocess::managed_shared_memory> shared_memory_;
-                parallelism::channel<char> *channel_;
+                parallelism::channel<char> *channel_ = nullptr;
                 int is_clinet;
                 parallelism::ring_queue<detail::request> *request_queue_;
 
@@ -74,55 +74,61 @@ namespace mio
 
                 size_t write_some(const void *data, size_t size)
                 {
-                    return channel_->write_some(is_clinet, (char*)data, size);
+                    return channel_->write_some(is_clinet, (char *)data, size);
                 }
 
                 size_t read_some(void *data, size_t size)
                 {
-                    return channel_->read_some(is_clinet, (char*)data, size);
+                    return channel_->read_some(is_clinet, (char *)data, size);
                 }
 
                 size_t async_write_some(const void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->write_some(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->write_some(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 size_t async_read_some(void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->read_some(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->read_some(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 size_t write(const void *data, size_t size)
                 {
-                    return channel_->write(is_clinet, (char*)data, size);
+                    return channel_->write(is_clinet, (char *)data, size);
                 }
 
                 size_t read(void *data, size_t size)
                 {
-                    return channel_->read(is_clinet, (char*)data, size);
+                    return channel_->read(is_clinet, (char *)data, size);
                 }
 
                 size_t async_write(const void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->write(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->write(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 size_t async_read(void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->read(is_clinet, (char*)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->read(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 void close()
                 {
-                    if (channel_->get_status() == parallelism::channel<char>::DISCONNECTED)
+                    if (channel_ != nullptr)
                     {
-                        shared_memory_->destroy_ptr(channel_);
+                        if (channel_->get_status() == parallelism::channel<char>::DISCONNECTED)
+                        {
+                            shared_memory_->destroy_ptr(channel_);
+                        }
+                        channel_->close();
                     }
-                    channel_->close();
                 }
 
-                ~socket() = default;
+                ~socket()
+                {
+                    close();
+                }
             };
         } // namespace pipe
-    }     // namespace ipc
+    }     // namespace interprocess
 } // namespace mio

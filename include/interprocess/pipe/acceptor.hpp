@@ -25,7 +25,7 @@ namespace mio
                 boost::asio::io_context &io_context_;
 
                 std::unique_ptr<boost::interprocess::managed_shared_memory> shared_memory_;
-                parallelism::ring_queue<detail::request> *request_queue_;
+                parallelism::ring_queue<detail::request> *request_queue_ = nullptr;
 
             public:
                 acceptor(boost::asio::io_context &io_context) : io_context_(io_context)
@@ -62,10 +62,17 @@ namespace mio
                 void close()
                 {
                     using namespace boost::interprocess;
-                    shared_memory_object::remove(address_.c_str());
+
+                    if (request_queue_ != nullptr)
+                    {
+                        shared_memory_object::remove(address_.c_str());
+                    }
                 }
 
-                ~acceptor() = default;
+                ~acceptor()
+                {
+                    close();
+                }
             };
         } // namespace pipe
     }     // namespace interprocess
