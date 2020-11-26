@@ -5,12 +5,12 @@
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
 
-#include "interprocess/tcp/socket.hpp"
-#include "interprocess/tool/host_resolver.hpp"
+#include "network/tcp/socket.hpp"
+#include "network/tool/host_resolver.hpp"
 
 namespace mio
 {
-    namespace interprocess
+    namespace network
     {
         namespace tcp
         {

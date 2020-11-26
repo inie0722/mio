@@ -1,4 +1,4 @@
-#include "interprocess/tcp.hpp"
+#include "network/tcp.hpp"
 #include <thread>
 #include <iostream>
 
@@ -7,10 +7,10 @@ int main()
     boost::asio::io_context io_context;
 
     boost::asio::spawn(io_context, [&](boost::asio::yield_context yield) {
-        mio::interprocess::tcp::acceptor acc(io_context);
+        mio::network::tcp::acceptor acc(io_context);
         acc.bind("ipv4:127.0.0.1:9979");
 
-        mio::interprocess::tcp::socket s(io_context);
+        mio::network::tcp::socket s(io_context);
         acc.async_accept(s, yield);
 
         char msg[10] = "123456789";
@@ -18,7 +18,7 @@ int main()
     });
     
     boost::asio::spawn(io_context, [&](boost::asio::yield_context yield) {
-        mio::interprocess::tcp::socket socket(io_context);
+        mio::network::tcp::socket socket(io_context);
         socket.async_connect("ipv4:127.0.0.1:9979", yield);
 
         char msg[10];

@@ -9,7 +9,7 @@
 
 namespace mio
 {
-    namespace interprocess
+    namespace network
     {
         auto host_resolve(boost::asio::io_context &io_context, const std::string &protocol, const std::string &host, const std::string &port)
         {
