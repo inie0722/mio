@@ -1,46 +1,52 @@
-#include "network/tcp.hpp"
-#include <thread>
+#include <atomic>
+#include <boost/asio.hpp>
 #include <iostream>
 
-int main()
+#include "network/tcp.hpp"
+#include "interprocess/pipe.hpp"
+
+#include "mq/mq.hpp"
+#include "mq/rpc.hpp"
+
+
+struct Protocol
 {
-    boost::asio::io_context io_context;
-
-    boost::asio::spawn(io_context, [&](boost::asio::yield_context yield) {
-        mio::network::tcp::acceptor acc(io_context);
-        acc.bind("ipv4:127.0.0.1:9979");
-
-        mio::network::tcp::socket s(io_context);
-        acc.async_accept(s, yield);
-
-        char msg[10] = "123456789";
-        s.async_write(msg, 10, yield);
-    });
     
-    boost::asio::spawn(io_context, [&](boost::asio::yield_context yield) {
-        mio::network::tcp::socket socket(io_context);
-        socket.async_connect("ipv4:127.0.0.1:9979", yield);
-
-        char msg[10];
-        socket.async_read(msg, 10, yield);
-
-        std::cout << msg << std::endl;
-        //socket.async_read(msg, 1, yield);
-    });
-    //ipv4:inie0722.top:8888
+    typedef mio::interprocess::pipe::acceptor acceptor_t;
+    typedef mio::interprocess::pipe::socket socket_t;
+    
     /*
-    std::thread th([&](){
-        mio::interprocess::socket socket(io_context);
-        socket.connect("127.0.0.1");
+    typedef mio::network::tcp::acceptor acceptor_t;
+    typedef mio::network::tcp::socket socket_t;
+    */
+};
 
-        char msg[10];
-        socket.read(msg, 10);
+int main(void)
+{
+    mio::mq::service<Protocol, mio::mq::rpc::service> s(1);
 
-        std::cout << msg << std::endl;
-        socket.read(msg, 1);
+    s.run("ipv4:0.0.0.0:9988");
+
+    s.on_accept([](void *socket, const std::vector<char> & msg)->bool{
+        std::cout << &msg[0] << std::endl;
+        return true;
     });
 
-    */
-    io_context.run();
+    auto aa = s.get_service<0>();
+
+    sleep(1);
+    mio::mq::client<Protocol, mio::mq::rpc::client> c(1);
+    c.on_connect([](void *socket, std::vector<char> & arg){
+
+        char msg[] = "123456789.0";
+        arg.resize(sizeof(msg));
+
+        memcpy(&arg[0], msg, sizeof(msg));
+
+    });
+
+    auto rpc = c.make_client<0>("ipv4:0.0.0.0:9988");
+    while(1)
+        sleep(10);
     return 0;
 }
