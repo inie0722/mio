@@ -124,7 +124,7 @@ namespace mio
             template <size_t I>
             auto &get_service()
             {
-                return static_cast<typename std::remove_reference<decltype(std::get<I>(tuple_))>::type::type &>(*service_[I].get());
+                return static_cast<typename std::remove_reference<decltype(std::get<I>(tuple_))>::type::type &>(*service_[I]);
             }
 
             void run(const std::string &address)

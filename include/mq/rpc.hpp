@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <shared_mutex>
 
 namespace mio
 {
@@ -24,7 +25,10 @@ namespace mio
 
             private:
                 typedef std::function<bool(void *socket, const msg_t &arg, msg_t &ret)> Handler;
+
+                std::shared_mutex mutex_;
                 std::unordered_map<std::string, Handler> handler_;
+                friend class session;
 
             public:
                 service() = default;
@@ -33,10 +37,10 @@ namespace mio
                 {
                 private:
                     friend class service;
-                    std::unordered_map<std::string, Handler> &handler_;
                     std::shared_ptr<socket_t> socket_;
+                    service *service_;
 
-                    session(const decltype(socket_) &socket, decltype(handler_) &handler) : handler_(handler), socket_(socket)
+                    session(const decltype(socket_) &socket, service *service) : socket_(socket), service_(service)
                     {
                     }
 
@@ -67,7 +71,10 @@ namespace mio
                             arg_msg.resize(arg_size);
 
                             //调用回调函数
-                            bool flag = handler_.at(name)(socket_.get(), arg_msg, ret_msg);
+                            service_->mutex_.lock_shared();
+                            bool flag = service_->handler_.at(name)(socket_.get(), arg_msg, ret_msg);
+                            service_->mutex_.unlock_shared();
+
                             socket_->async_write(&flag, 1, yield);
                             if (!flag)
                             {
@@ -84,13 +91,15 @@ namespace mio
 
                 std::shared_ptr<basic_session_t> make_session(const std::shared_ptr<socket_t> &socket)
                 {
-                    return std::shared_ptr<basic_session_t>(new session(socket, handler_));
+                    return std::shared_ptr<basic_session_t>(new session(socket, this));
                 }
 
                 //绑定远程调用函数
                 void bind(const std::string &name, const Handler &handler)
                 {
+                    mutex_.lock();
                     this->handler_[name] = handler;
+                    mutex_.unlock();
                 }
             };
 
