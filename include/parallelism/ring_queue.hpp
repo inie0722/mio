@@ -76,7 +76,11 @@ namespace mio
 
             size_t size() const
             {
-                return writable_limit_ - readable_limit_;
+                size_t writable_limit = writable_limit_;
+                size_t readable_limit = readable_limit_;
+
+
+                return writable_limit > readable_limit ? writable_limit - readable_limit : 0;
             }
 
             bool empty() const
