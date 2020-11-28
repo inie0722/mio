@@ -1,30 +1,39 @@
 #pragma once
 
 #include <type_traits>
+#include <tuple>
+#include <string>
+#include <string_view>
 
 namespace mio
 {
-    template<typename T, typename U>
-    struct is_same_ignore_modifier
-    {
-        static constexpr bool value
-        = std::is_same<T, U>::value 
-        || std::is_same<T, const U>::value
-        || std::is_same<T, volatile U>::value
-        || std::is_same<T, const volatile U>::value
-        || std::is_same<const T, U>::value
-        || std::is_same<volatile T, U>::value
-        || std::is_same<const volatile T, U>::value;
-    };
-
-    template<typename T>
+    template <typename T_>
     struct is_string
     {
-        static constexpr bool value 
-        = is_same_ignore_modifier<T, std::string>::value 
-        || is_same_ignore_modifier<T, std::string_view>::value 
-        || is_same_ignore_modifier<T, char*>::value
-        || is_same_ignore_modifier<T, const char*>::value
-        || (std::is_array<T>::value ? is_same_ignore_modifier<T, char[sizeof(T)]>::value : 0);
+    private:
+        using type = typename std::remove_cv<T_>::type;
+
+    public:
+        static constexpr bool value = std::is_same<type, std::string>::value || std::is_same<type, std::string_view>::value || std::is_same<type, char *>::value || std::is_same<type, const char *>::value || (std::is_array<type>::value ? std::is_same<type, char[sizeof(type)]>::value : 0);
     };
-}
+
+    template <typename... Args>
+    class type_tuple
+    {
+    private:
+        template <typename T_>
+        struct __tuple
+        {
+            using type = T_;
+        };
+
+        std::tuple<__tuple<Args>...> tuple;
+
+    public:
+        template <size_t I>
+        struct get
+        {
+            using type = typename std::remove_reference<decltype(std::get<I>(tuple))>::type::type;
+        };
+    };
+} // namespace mio
