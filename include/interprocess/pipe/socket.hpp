@@ -1,20 +1,17 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
-
-#include <memory>
 
 #include "parallelism/ring_queue.hpp"
 #include "parallelism/channel.hpp"
 
 #include "interprocess/pipe/acceptor.hpp"
 #include "interprocess/pipe/detail.hpp"
-
-#include <iostream>
 
 namespace mio
 {
@@ -42,6 +39,15 @@ namespace mio
                 socket(decltype(io_context_) &io_context) : io_context_(io_context)
                 {
                     is_clinet = 1;
+                }
+
+                socket(socket && other) : io_context_(other.io_context_), shared_memory_(std::move(other.shared_memory_))
+                {
+                    channel_ = other.channel_;
+                    is_clinet = other.is_clinet;
+                    request_queue_ = other.request_queue_;
+
+                    other.channel_= nullptr;
                 }
 
                 void connect(const std::string &address)
@@ -121,6 +127,8 @@ namespace mio
                             shared_memory_->destroy_ptr(channel_);
                         }
                         channel_->close();
+
+                        channel_ = nullptr;
                     }
                 }
 

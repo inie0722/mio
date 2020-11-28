@@ -27,6 +27,10 @@ namespace mio
                 {
                 }
 
+                socket(socket && other) : io_context_(other.io_context_), socket_(std::move(other.socket_))
+                {
+                }
+
                 void connect(const std::string &address)
                 {
                     auto host = host_resolve(io_context_, address);
