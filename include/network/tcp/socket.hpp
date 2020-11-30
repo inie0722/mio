@@ -99,6 +99,11 @@ namespace mio
                 }
 
                 ~socket() = default;
+
+                bool is_open() const
+                {
+                    return socket_.is_open();
+                }
             };
         } // namespace tcp
     }     // namespace interprocess

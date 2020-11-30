@@ -27,25 +27,29 @@ namespace mio
 
                 std::unique_ptr<boost::interprocess::managed_shared_memory> shared_memory_;
                 parallelism::channel<char> *channel_ = nullptr;
-                int is_clinet;
+                
                 parallelism::ring_queue<detail::request> *request_queue_;
+
+
+                bool is_clinet_;
 
             public:
                 socket(decltype(io_context_) &io_context, const decltype(channel_) &channel) : io_context_(io_context), channel_(channel)
                 {
-                    is_clinet = 0;
+                    is_clinet_ = 0;
                 }
 
                 socket(decltype(io_context_) &io_context) : io_context_(io_context)
                 {
-                    is_clinet = 1;
+                    is_clinet_ = 1;
                 }
 
                 socket(socket && other) : io_context_(other.io_context_), shared_memory_(std::move(other.shared_memory_))
                 {
+                    
                     channel_ = other.channel_;
-                    is_clinet = other.is_clinet;
                     request_queue_ = other.request_queue_;
+                    is_clinet_ = other.is_clinet_;
 
                     other.channel_= nullptr;
                 }
@@ -80,42 +84,42 @@ namespace mio
 
                 size_t write_some(const void *data, size_t size)
                 {
-                    return channel_->write_some(is_clinet, (char *)data, size);
+                    return channel_->write_some(is_clinet_, (char *)data, size);
                 }
 
                 size_t read_some(void *data, size_t size)
                 {
-                    return channel_->read_some(is_clinet, (char *)data, size);
+                    return channel_->read_some(is_clinet_, (char *)data, size);
                 }
 
                 size_t async_write_some(const void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->write_some(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->write_some(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 size_t async_read_some(void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->read_some(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->read_some(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 size_t write(const void *data, size_t size)
                 {
-                    return channel_->write(is_clinet, (char *)data, size);
+                    return channel_->write(is_clinet_, (char *)data, size);
                 }
 
                 size_t read(void *data, size_t size)
                 {
-                    return channel_->read(is_clinet, (char *)data, size);
+                    return channel_->read(is_clinet_, (char *)data, size);
                 }
 
                 size_t async_write(const void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->write(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->write(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 size_t async_read(void *data, size_t size, boost::asio::yield_context yield)
                 {
-                    return channel_->read(is_clinet, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
+                    return channel_->read(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
                 void close()
@@ -135,6 +139,11 @@ namespace mio
                 ~socket()
                 {
                     close();
+                }
+
+                bool is_open() const
+                {
+                    return channel_;
                 }
             };
         } // namespace pipe
