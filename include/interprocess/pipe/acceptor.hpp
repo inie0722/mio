@@ -51,7 +51,7 @@ namespace mio
                     new (&peer) socket(io_context_, req.channel_ptr.get());
                 }
 
-                void async_accept(socket &peer, boost::asio::yield_context yield)
+                void accept(socket &peer, boost::asio::yield_context yield)
                 {
                     detail::request req;
                     request_queue_->pop(req, [&](size_t) { this->io_context_.post(yield); });

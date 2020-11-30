@@ -38,7 +38,7 @@ namespace mio
                     socket_.connect(host.begin()->endpoint());
                 }
 
-                void async_connect(const std::string &address, boost::asio::yield_context yield)
+                void connect(const std::string &address, boost::asio::yield_context yield)
                 {
                     auto host = async_host_resolve(io_context_, address, yield);
 
@@ -57,13 +57,13 @@ namespace mio
                     return socket_.read_some(buffer(data, size));
                 }
 
-                size_t async_write_some(const void *data, size_t size, boost::asio::yield_context yield)
+                size_t write_some(const void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return socket_.async_write_some(buffer(data, size), yield);
                 }
 
-                size_t async_read_some(void *data, size_t size, boost::asio::yield_context yield)
+                size_t read_some(void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return socket_.async_read_some(buffer(data, size), yield);
@@ -81,13 +81,13 @@ namespace mio
                     return boost::asio::read(socket_, buffer(data, size));
                 }
 
-                size_t async_write(const void *data, size_t size, boost::asio::yield_context yield)
+                size_t write(const void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return boost::asio::async_write(socket_, buffer(data, size), yield);
                 }
 
-                size_t async_read(void *data, size_t size, boost::asio::yield_context yield)
+                size_t read(void *data, size_t size, boost::asio::yield_context yield)
                 {
                     using namespace boost::asio;
                     return boost::asio::async_read(socket_, buffer(data, size), yield);
