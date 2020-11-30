@@ -155,12 +155,13 @@ namespace mio
                                         uint64_t msg_size;
 
                                         //读取验证参数
+                                        socket->async_read(&index, sizeof(index), yield);
+
                                         socket->async_read(&msg_size, sizeof(msg_size), yield);
                                         msg.resize(msg_size);
                                         socket->async_read(&msg[0], msg_size, yield);
 
                                         bool flag = accept_handler_(socket.get(), msg);
-                                        socket->async_write(&flag, sizeof(flag), yield);
 
                                         if (!flag)
                                         {
@@ -205,7 +206,7 @@ namespace mio
 
             std::tuple<type_list<Args<Protocol>>...> tuple_;
 
-            std::function<void(void *socket, msg_t &arg)> connect_handler_;
+            std::function<void(msg_t &arg)> connect_handler_;
 
         public:
             client(size_t thread_size) : manager(thread_size)
@@ -217,38 +218,42 @@ namespace mio
                 connect_handler_ = connect_handler;
             }
 
-            template <size_t I>
+            template <size_t I, size_t MERGE_SIZE = 64>
             auto make_client(const std::string &address)
             {
                 using namespace boost::asio;
                 using namespace boost::asio::ip;
 
                 auto &io_context = get_io_context();
-                auto socket = std::make_shared<socket_t>(io_context);
+                socket_t socket(io_context);
 
-                socket->connect(address);
+                socket.connect(address);
 
                 msg_t arg;
-                connect_handler_(socket.get(), arg);
+                connect_handler_(arg);
 
-                uint64_t arg_size = arg.size();
-                socket->write(&arg_size, sizeof(arg_size));
-                socket->write(&arg[0], arg_size);
+                char buffer[MERGE_SIZE + (sizeof(uint64_t) * 2)];
+                uint64_t buffer_size = 0;
 
-                size_t index = I;
-                socket->write(&index, sizeof(index));
+                reinterpret_cast<uint64_t &>(buffer[buffer_size]) = I;
+                buffer_size += sizeof(uint64_t);
 
-                //登录成功标志位
-                bool flag;
-                socket->read(&flag, sizeof(flag));
+                reinterpret_cast<uint64_t &>(buffer[buffer_size]) = arg.size();
+                buffer_size += sizeof(uint64_t);
 
-                if (!flag)
+                if (arg.size() <= MERGE_SIZE)
                 {
-                    throw std::runtime_error("Server verification failed");
+                    std::copy_n(&arg[0], arg.size(), &buffer[buffer_size]);
+                    buffer_size += arg.size();
+                    socket.write(buffer, buffer_size);
+                }
+                else
+                {
+                    socket.write(buffer, buffer_size);
+                    socket.write(&arg[0], arg.size());
                 }
 
-                auto ret = std::make_shared<typename std::remove_reference<decltype(std::get<I>(tuple_))>::type::type>(socket);
-                return ret;
+                return typename std::remove_reference<decltype(std::get<I>(tuple_))>::type::type(std::move(socket));
             }
         };
     } // namespace mq
