@@ -297,7 +297,7 @@ namespace mio
                                 });
 
                                 {
-                                    std::lock_guard(mutex_);
+                                    std::lock_guard lock(mutex_);
                                     promise_map_[req.second.uuid] = req.first;
                                 }
 
@@ -331,7 +331,7 @@ namespace mio
                                 socket_.read(&res.data[0], size, yield);
 
                                 {
-                                    std::lock_guard(mutex_);
+                                    std::lock_guard lock(mutex_);
                                     promise_map_.at(res.uuid)->set_value(std::move(res));
                                 }
                             }

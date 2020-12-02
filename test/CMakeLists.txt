@@ -10,6 +10,10 @@ add_executable(log log.cpp)
 
 target_link_libraries(log pthread)
 
-add_executable(test test.cpp)
+add_executable(c c.cpp)
 
-target_link_libraries(test rt boost_system pthread boost_coroutine)
+target_link_libraries(c rt boost_system pthread boost_coroutine)
+
+add_executable(s s.cpp)
+
+target_link_libraries(s rt boost_system pthread boost_coroutine)
