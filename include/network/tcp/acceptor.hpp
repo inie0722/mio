@@ -44,7 +44,8 @@ namespace mio
                     acceptor_.accept(peer.socket_);
                 }
 
-                void accept(socket &peer, boost::asio::yield_context yield)
+                template<typename Yield>
+                void accept(socket &peer, Yield yield)
                 {
                     acceptor_.async_accept(peer.socket_, yield);
                 }
