@@ -83,7 +83,7 @@ namespace mio
                 {
                     while (1)
                     {
-                        auto msg = std::make_unique<message>();
+                        auto msg = std::make_shared<message>();
                         uint64_t name_size;
                         uint64_t data_size;
 
@@ -100,14 +100,14 @@ namespace mio
 
                         if (msg->type == message_type::RESPONSE)
                         {
-                            uuid_promise_map_[msg->uuid]->set_value(std::move(msg));
+                            uuid_promise_map_[msg->uuid]->set_value(msg);
                         }
                         else
                         {
                             if(std::holds_alternative<message_handler_t>(manager_->message_handler_[level_][msg->name]))
                             {
                                 boost::fibers::fiber(std::get<message_handler_t>(manager_->message_handler_[level_][msg->name]),
-                                message_args{this->shared_from_this(), std::move(msg)}).detach();
+                                message_args{this->shared_from_this(), msg}).detach();
                             }
                             else
                             {
@@ -206,7 +206,7 @@ namespace mio
                 using session_set_t = std::unordered_set<std::shared_ptr<session>>;
                 
                 //收到消息的处理程序
-                using message_args = std::pair<std::weak_ptr<session>, std::unique_ptr<message>>;
+                using message_args = std::pair<std::weak_ptr<session>, std::shared_ptr<message>>;
                 using message_handler_t = std::function<void(message_args)>;
                 using message_queue_t = std::shared_ptr<boost::fibers::buffered_channel<message_args>>;
 
