@@ -16,4 +16,4 @@ target_link_libraries(c rt boost_system pthread boost_coroutine)
 
 add_executable(s s.cpp)
 
-target_link_libraries(s rt boost_system pthread boost_coroutine)
+target_link_libraries(s rt boost_system pthread boost_coroutine boost_context boost_fiber)

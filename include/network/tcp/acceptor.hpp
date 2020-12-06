@@ -27,6 +27,11 @@ namespace mio
                 {
                 }
 
+                acceptor(acceptor && other):address_(std::move(other.address_)), io_context_(other.io_context_), acceptor_(std::move(other.acceptor_))
+                {
+
+                }
+
                 void bind(const std::string &address)
                 {
                     using namespace boost::asio;
@@ -45,7 +50,7 @@ namespace mio
                 }
 
                 template<typename Yield>
-                void accept(socket &peer, Yield yield)
+                void accept(socket &peer, Yield& yield)
                 {
                     acceptor_.async_accept(peer.socket_, yield);
                 }

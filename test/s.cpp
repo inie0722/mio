@@ -1,59 +1,39 @@
 #include <iostream>
-#include "mq/req_rep.hpp"
-
-void print_exception(const std::exception& e, int level =  0)
-{
-    std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';
-    try {
-        std::rethrow_if_nested(e);
-    } catch(const std::exception& e) {
-        print_exception(e, level+1);
-    } catch(...) {}
-}
+#include "mq/manager.hpp"
 
 int main(void)
 {
-    boost::asio::io_context io_context;
+    /*
+    mio::mq::manager m(1);
 
-    mio::mq::req_rep::rep rep(io_context);
-    rep.bind("ipv4:127.0.0.1:9999");
+    m.registered("call", [&](const std::shared_ptr<mio::mq::manager::session> &ptr, const std::shared_ptr<mio::mq::message> &msg){
+        auto msg_res = std::make_shared<mio::mq::message>();
+        msg_res->name = "call";
+        msg_res->data= msg->data;
+        msg_res->uuid = msg->uuid;
+        msg_res->type = mio::mq::message_type::RESPONSE;
 
-    std::thread th([&](){
-
-        while (1)
-        {
-            try
-            {
-                io_context.run();
-            }
-            catch(const std::exception& e)
-            {
-                print_exception(e);
-            }
-        }
-            usleep(10000);
-    });
-    
-
-    while (1)
-    {
+        ptr->response(msg_res);
         
-        mio::mq::req_rep::request req;
+    });
 
-        req.uuid = boost::uuids::random_generator()();
-        auto c = rep.read(req);
+    m.bind("ipv4:127.0.0.1:9999");
 
-        std::cout << &req.data[0] << std::endl;
+    mio::mq::message msg;
+    msg.type = mio::mq::message_type::NOTICE;
 
-        mio::mq::req_rep::response res;
+    msg.name = "ipv4:127.0.0.1:9999";
+    m.on_acceptor([&](const std::string &address, const std::shared_ptr<mio::mq::manager::session>& session){
+        std::cout << address << std::endl;
+        std::cout << session->get_uuid() << std::endl;
+        session->add_group("test");
+    });
 
-        res.uuid = req.uuid;
-
-        res.data = req.data;
-        rep.write(c, std::move(res));
-        usleep(10000);
+    while(1)
+    {
+        m.push("test", msg);
+        sleep(3);
     }
-    
-    th.join();
+        */
     return 0;
 }

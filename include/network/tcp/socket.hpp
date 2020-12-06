@@ -41,7 +41,7 @@ namespace mio
                 template<typename Yield>
                 void connect(const std::string &address, Yield yield)
                 {
-                    auto host = async_host_resolve(io_context_, address, yield);
+                    auto host = host_resolve(io_context_, address);
 
                     socket_.async_connect(host.begin()->endpoint(), yield);
                 }
