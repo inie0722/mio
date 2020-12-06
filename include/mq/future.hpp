@@ -17,7 +17,7 @@ namespace mio
             friend class promise;
             size_t size_;
 
-            std::shared_ptr<boost::fibers::buffered_channel<std::shared_ptr<message>>> pipe_;
+            std::shared_ptr<boost::fibers::buffered_channel<std::unique_ptr<message>>> pipe_;
 
             future(size_t size, const decltype(pipe_) &pipe) : pipe_(pipe)
             {
@@ -25,9 +25,9 @@ namespace mio
             }
 
         public:
-            std::shared_ptr<message> get()
+            std::unique_ptr<message> get()
             {
-                std::shared_ptr<message> msg;
+                std::unique_ptr<message> msg;
                 pipe_->pop(msg);
 
                 return msg;
@@ -43,13 +43,13 @@ namespace mio
         {
         private:
             size_t size_;
-            std::shared_ptr<boost::fibers::buffered_channel<std::shared_ptr<message>>> pipe_;
+            std::shared_ptr<boost::fibers::buffered_channel<std::unique_ptr<message>>> pipe_;
 
         public:
             promise(size_t size)
             {
                 size_ = size;
-                pipe_ = std::make_shared<boost::fibers::buffered_channel<std::shared_ptr<message>>>(64);
+                pipe_ = std::make_shared<boost::fibers::buffered_channel<std::unique_ptr<message>>>(64);
             }
 
             future get_future()
@@ -57,9 +57,9 @@ namespace mio
                 return future(size_, pipe_);
             }
 
-            void set_value(const std::shared_ptr<message> &msg)
+            void set_value(std::unique_ptr<message> &&msg)
             {
-                pipe_->push(msg);
+                pipe_->push(std::move(msg));
             }
         };
     } // namespace mq

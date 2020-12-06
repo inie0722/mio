@@ -12,7 +12,7 @@ target_link_libraries(log pthread)
 
 add_executable(c c.cpp)
 
-target_link_libraries(c rt boost_system pthread boost_coroutine)
+target_link_libraries(c rt boost_system pthread boost_coroutine boost_context boost_fiber)
 
 add_executable(s s.cpp)
 

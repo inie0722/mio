@@ -1,55 +1,26 @@
 #include <iostream>
-#include "mq/req_rep.hpp"
+#include "mq/manager.hpp"
 
-void print_exception(const std::exception& e, int level =  0)
-{
-    std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';
-    try {
-        std::rethrow_if_nested(e);
-    } catch(const std::exception& e) {
-        print_exception(e, level+1);
-    } catch(...) {}
-}
+using namespace mio::mq;
 
 int main(void)
 {
-    boost::asio::io_context io_context;
+    mio::mq::manager m(1);
 
-    mio::mq::req_rep::req req_(io_context);
-    req_.connect("ipv4:127.0.0.1:9999");
-
-    std::thread th([&](){
-
-        while (1)
-        {
-            try
-            {
-                io_context.run();
-            }
-            catch(const std::exception& e)
-            {
-                print_exception(e);
-            }
-        }
-            usleep(10000);
+    m.registered("test", 0, [&](std::pair<std::weak_ptr<manager::session>, std::unique_ptr<message>> msg){
     });
-    
 
-    while (1)
+    m.on_connect([&](const std::string &address, const std::weak_ptr<mio::mq::manager::session>& session){
+        std::cout << address << std::endl;
+        //std::cout << session->get_uuid() << std::endl;
+    });
+
+    m.connect("ipv4:127.0.0.1:9999");
+    
+    while(1)
     {
-        
-        mio::mq::req_rep::request req;
-
-        char msg[] = "123456789.0";
-        req.data.resize(sizeof(msg));
-        memcpy(&req.data[0], msg, req.data.size());
-        req.uuid = boost::uuids::random_generator()();
-        auto fu = req_.write(std::move(req));
-
-        std::cout << &fu.get().data[0] << std::endl;
-        usleep(10000);
+        sleep(1);
     }
-    
-    th.join();
+        
     return 0;
 }

@@ -51,6 +51,8 @@ namespace mio
                 std::shared_mutex group_set_mutex_;
                 std::unordered_set<std::string> group_set_;
 
+                size_t level_ = 0;
+
                 void do_write()
                 {
                     while (1)
@@ -81,7 +83,7 @@ namespace mio
                 {
                     while (1)
                     {
-                        auto msg = std::make_shared<message>();
+                        auto msg = std::make_unique<message>();
                         uint64_t name_size;
                         uint64_t data_size;
 
@@ -98,11 +100,19 @@ namespace mio
 
                         if (msg->type == message_type::RESPONSE)
                         {
-                            uuid_promise_map_[msg->uuid]->set_value(msg);
+                            uuid_promise_map_[msg->uuid]->set_value(std::move(msg));
                         }
                         else
                         {
-                            std::cout << &msg << std::endl;
+                            if(std::holds_alternative<message_handler_t>(manager_->message_handler_[level_][msg->name]))
+                            {
+                                boost::fibers::fiber(std::get<message_handler_t>(manager_->message_handler_[level_][msg->name]),
+                                message_args{this->shared_from_this(), std::move(msg)}).detach();
+                            }
+                            else
+                            {
+                                //std::get<message_queue_t>(manager_->message_handler_[level_][msg->name]->push(message_args{this->shared_from_this(), std::move(msg)});
+                            }
                             //boost::fibers::fiber(manager_->message_handler_map_[msg->name], this->shared_from_this(), msg).detach();
                         }
                     }
@@ -184,6 +194,11 @@ namespace mio
                     manager_->group_map_mutex_.unlock();
                     group_set_mutex_.unlock();
                 }
+
+                void set_level(size_t level)
+                {
+                    level_ = level;
+                }
             };
 
             private:
@@ -233,6 +248,7 @@ namespace mio
             public:
                 manager(size_t thread_size)
                 {
+                    thread_size_ = thread_size;
                     for (size_t i = 0; i < thread_size; i++)
                     {
                         io_context_.push_back(std::make_unique<boost::asio::io_context>());
@@ -280,9 +296,9 @@ namespace mio
                 {
                     message_handler_mutex_.lock();
 
-                    if(message_handler_.size() < level)
+                    if(message_handler_.size() <= level)
                     {
-                        message_handler_.resize(level);
+                        message_handler_.resize(level + 1);
                     }
                     message_handler_[level][name] = handler;
                     message_handler_mutex_.unlock();
