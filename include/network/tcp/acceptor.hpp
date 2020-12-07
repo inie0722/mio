@@ -50,7 +50,7 @@ namespace mio
                 }
 
                 template<typename Yield>
-                void accept(socket &peer, Yield& yield)
+                void async_accept(socket &peer, Yield& yield)
                 {
                     acceptor_.async_accept(peer.socket_, yield);
                 }

@@ -68,7 +68,8 @@ namespace mio
                     request_queue_->push(req);
                 }
 
-                void connect(const std::string &address, boost::asio::yield_context yield)
+                template<typename Yield>
+                void async_connect(const std::string &address, Yield& yield)
                 {
                     using namespace boost::interprocess;
 
@@ -92,12 +93,14 @@ namespace mio
                     return channel_->read_some(is_clinet_, (char *)data, size);
                 }
 
-                size_t write_some(const void *data, size_t size, boost::asio::yield_context yield)
+                template<typename Yield>
+                size_t async_write_some(const void *data, size_t size, Yield& yield)
                 {
                     return channel_->write_some(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                size_t read_some(void *data, size_t size, boost::asio::yield_context yield)
+                template<typename Yield>
+                size_t async_read_some(void *data, size_t size, Yield& yield)
                 {
                     return channel_->read_some(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
@@ -112,12 +115,14 @@ namespace mio
                     return channel_->read(is_clinet_, (char *)data, size);
                 }
 
-                size_t write(const void *data, size_t size, boost::asio::yield_context yield)
+                template<typename Yield>
+                size_t async_write(const void *data, size_t size, Yield& yield)
                 {
                     return channel_->write(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                size_t read(void *data, size_t size, boost::asio::yield_context yield)
+                template<typename Yield>
+                size_t async_read(void *data, size_t size, Yield& yield)
                 {
                     return channel_->read(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }

@@ -17,6 +17,7 @@ int main(void)
 
         sleep(3);
         msg.first.lock()->response(msg_res);
+        //msg.first.lock()->close();
     });
 
     m.bind("ipv4:127.0.0.1:9999");

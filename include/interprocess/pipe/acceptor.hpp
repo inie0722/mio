@@ -32,6 +32,11 @@ namespace mio
                 {
                 }
 
+                acceptor(acceptor && other):address_(std::move(other.address_)), io_context_(other.io_context_), shared_memory_(std::move(other.shared_memory_))
+                {
+                    request_queue_ = other.request_queue_;
+                }
+
                 void bind(const std::string &address)
                 {
                     using namespace boost::interprocess;
@@ -51,7 +56,8 @@ namespace mio
                     new (&peer) socket(io_context_, req.channel_ptr.get());
                 }
 
-                void accept(socket &peer, boost::asio::yield_context yield)
+                template<typename Yield>
+                void accept(socket &peer, Yield yield)
                 {
                     detail::request req;
                     request_queue_->pop(req, [&](size_t) { this->io_context_.post(yield); });

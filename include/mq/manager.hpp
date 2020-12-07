@@ -20,6 +20,7 @@
 #include "mq/message.hpp"
 #include "mq/future.hpp"
 #include "network/tcp.hpp"
+#include "interprocess/pipe.hpp"
 
 namespace mio
 {
@@ -28,16 +29,20 @@ namespace mio
         class manager
         {
         public:
+        
             using socket_t = mio::network::tcp::socket;
             using acceptor_t = mio::network::tcp::acceptor;
-
+        /*
+            using socket_t = mio::interprocess::pipe::socket;
+            using acceptor_t = mio::interprocess::pipe::acceptor;
+        */
             class session : public std::enable_shared_from_this<session>
             {
             private:
                 friend class manager;
                 manager* manager_;
 
-                mio::network::tcp::socket socket_;
+                socket_t socket_;
                 boost::fibers::buffered_channel<std::pair<std::shared_ptr<message>, std::shared_ptr<promise>>> write_pipe_;
 
                 boost::fibers::fiber read_fiber_;
@@ -55,82 +60,100 @@ namespace mio
 
                 void do_write()
                 {
-                    while (1)
+                    try
                     {
-                        std::pair<std::shared_ptr<message>, std::shared_ptr<promise>> msg;
-                        write_pipe_.pop(msg);
-
-                        if (msg.second != nullptr)
+                        while (1)
                         {
-                            uuid_promise__mutex_.lock();
-                            uuid_promise_map_[msg.first->uuid] = msg.second;
-                            uuid_promise__mutex_.unlock();
+                            std::pair<std::shared_ptr<message>, std::shared_ptr<promise>> msg;
+                            write_pipe_.pop(msg);
+
+                            if (msg.second != nullptr)
+                            {
+                                uuid_promise__mutex_.lock();
+                                uuid_promise_map_[msg.first->uuid] = msg.second;
+                                uuid_promise__mutex_.unlock();
+                            }
+
+                            uint64_t name_size = msg.first->name.size();
+                            uint64_t data_size = msg.first->data.size();
+
+                            socket_.write(&msg.first->type, sizeof(msg.first->type), boost::fibers::asio::yield);
+                            socket_.write(&msg.first->uuid, sizeof(msg.first->uuid), boost::fibers::asio::yield);
+                            socket_.write(&name_size, sizeof(name_size), boost::fibers::asio::yield);
+                            socket_.write(&data_size, sizeof(data_size), boost::fibers::asio::yield);
+                            socket_.write(&msg.first->name[0], name_size, boost::fibers::asio::yield);
+                            socket_.write(&msg.first->data[0], data_size, boost::fibers::asio::yield);
                         }
-
-                        uint64_t name_size = msg.first->name.size();
-                        uint64_t data_size = msg.first->data.size();
-
-                        socket_.write(&msg.first->type, sizeof(msg.first->type), boost::fibers::asio::yield);
-                        socket_.write(&msg.first->uuid, sizeof(msg.first->uuid), boost::fibers::asio::yield);
-                        socket_.write(&name_size, sizeof(name_size), boost::fibers::asio::yield);
-                        socket_.write(&data_size, sizeof(data_size), boost::fibers::asio::yield);
-                        socket_.write(&msg.first->name[0], name_size, boost::fibers::asio::yield);
-                        socket_.write(&msg.first->data[0], data_size, boost::fibers::asio::yield);
+                    }
+                    catch (const std::exception &e)
+                    {
+                        std::cerr << e.what() << '\n';
                     }
                 }
 
                 void do_read()
                 {
-                    while (1)
+                    try
                     {
-                        auto msg = std::make_shared<message>();
-                        uint64_t name_size;
-                        uint64_t data_size;
-
-                        socket_.read(&msg->type, sizeof(msg->type), boost::fibers::asio::yield);
-                        socket_.read(&msg->uuid, sizeof(msg->uuid), boost::fibers::asio::yield);
-                        socket_.read(&name_size, sizeof(name_size), boost::fibers::asio::yield);
-                        socket_.read(&data_size, sizeof(data_size), boost::fibers::asio::yield);
-
-                        msg->name.resize(name_size);
-                        msg->data.resize(data_size);
-
-                        socket_.read(&msg->name[0], name_size, boost::fibers::asio::yield);
-                        socket_.read(&msg->data[0], data_size, boost::fibers::asio::yield);
-
-                        if (msg->type == message_type::RESPONSE)
+                        while (1)
                         {
-                            uuid_promise_map_[msg->uuid]->set_value(msg);
-                        }
-                        else
-                        {
-                            if(std::holds_alternative<message_handler_t>(manager_->message_handler_[level_][msg->name]))
+                            auto msg = std::make_shared<message>();
+                            uint64_t name_size;
+                            uint64_t data_size;
+
+                            socket_.read(&msg->type, sizeof(msg->type), boost::fibers::asio::yield);
+                            socket_.read(&msg->uuid, sizeof(msg->uuid), boost::fibers::asio::yield);
+                            socket_.read(&name_size, sizeof(name_size), boost::fibers::asio::yield);
+                            socket_.read(&data_size, sizeof(data_size), boost::fibers::asio::yield);
+
+                            msg->name.resize(name_size);
+                            msg->data.resize(data_size);
+
+                            socket_.read(&msg->name[0], name_size, boost::fibers::asio::yield);
+                            socket_.read(&msg->data[0], data_size, boost::fibers::asio::yield);
+
+                            if (msg->type == message_type::RESPONSE)
                             {
-                                boost::fibers::fiber(std::get<message_handler_t>(manager_->message_handler_[level_][msg->name]),
-                                message_args{this->shared_from_this(), msg}).detach();
+                                uuid_promise_map_[msg->uuid]->set_value(msg);
                             }
                             else
                             {
-                                //std::get<message_queue_t>(manager_->message_handler_[level_][msg->name]->push(message_args{this->shared_from_this(), std::move(msg)});
+                                auto &handler = manager_->message_handler_[msg->name];
+                                if (std::holds_alternative<message_handler_t>(handler.second))
+                                {
+                                    boost::fibers::fiber(std::get<message_handler_t>(handler.second),
+                                                         message_args{this->shared_from_this(), msg})
+                                        .detach();
+                                }
+                                else
+                                {
+                                    std::get<message_queue_t>(handler.second)->push(message_args(this->shared_from_this(), std::move(msg)));
+                                }
                             }
-                            //boost::fibers::fiber(manager_->message_handler_map_[msg->name], this->shared_from_this(), msg).detach();
                         }
+                    }
+                    catch (const std::exception &e)
+                    {
+                        std::cerr << e.what() << '\n';
                     }
                 }
 
             public:
-                session(manager *manager, mio::network::tcp::socket &&socket) : manager_(manager), socket_(std::move(socket)), write_pipe_(4096)
+                session(manager *manager, socket_t &&socket) : manager_(manager), socket_(std::move(socket)), write_pipe_(4096)
                 {
                     read_fiber_ = boost::fibers::fiber(&session::do_read, this);
                     write_fiber_ = boost::fibers::fiber(&session::do_write, this);
                 }
 
-                ~session() = default;
+                ~session()
+                {
+                    std::cout << __func__ << std::endl;
+                }
 
                 void close()
                 {
                     //触发回调
-                    manager_->close_handler_(*this);
+                    //manager_->close_handler_(*this);
 
                     //关闭读和写 纤程
                     socket_.close();
@@ -211,7 +234,7 @@ namespace mio
                 using message_queue_t = std::shared_ptr<boost::fibers::buffered_channel<message_args>>;
 
                 std::shared_mutex message_handler_mutex_;
-                std::vector<std::unordered_map<std::string, std::variant<message_handler_t, message_queue_t>>> message_handler_;
+                std::unordered_map<std::string, std::pair<size_t, std::variant<message_handler_t, message_queue_t>>> message_handler_;
 
                 //组列表
                 std::shared_mutex group_map_mutex_;
@@ -255,7 +278,18 @@ namespace mio
                         thread_.push_back(std::thread([this, i]() {
                             boost::fibers::use_scheduling_algorithm<boost::fibers::asio::round_robin>(io_context_[i]);
 
-                            io_context_[i]->run();
+                            while(1)
+                            {
+                                try
+                                {
+                                    io_context_[i]->run();
+                                }
+                                catch(const std::exception& e)
+                                {
+                                    std::cerr << e.what() << '\n';
+                                }
+                            }
+                            
                         }));
                     }
                 }
@@ -295,19 +329,14 @@ namespace mio
                 void registered(const std::string &name, size_t level, const std::variant<message_handler_t, message_queue_t> &handler)
                 {
                     message_handler_mutex_.lock();
-
-                    if(message_handler_.size() <= level)
-                    {
-                        message_handler_.resize(level + 1);
-                    }
-                    message_handler_[level][name] = handler;
+                    message_handler_[name] = {level, handler};
                     message_handler_mutex_.unlock();
                 }
 
                 void logout(const std::string &name, size_t level)
                 {
                     message_handler_mutex_.lock();
-                    message_handler_[level].erase(name);
+                    message_handler_.erase(name);
                     message_handler_mutex_.unlock();
                 }
 
