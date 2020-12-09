@@ -3,7 +3,6 @@
 #include <string>
 
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 
 #include "network/tcp/socket.hpp"
 #include "network/tool/host_resolver.hpp"
@@ -27,9 +26,8 @@ namespace mio
                 {
                 }
 
-                acceptor(acceptor && other):address_(std::move(other.address_)), io_context_(other.io_context_), acceptor_(std::move(other.acceptor_))
+                acceptor(acceptor &&other) : address_(std::move(other.address_)), io_context_(other.io_context_), acceptor_(std::move(other.acceptor_))
                 {
-
                 }
 
                 void bind(const std::string &address)
@@ -49,8 +47,8 @@ namespace mio
                     acceptor_.accept(peer.socket_);
                 }
 
-                template<typename Yield>
-                void async_accept(socket &peer, Yield& yield)
+                template <typename Yield>
+                void async_accept(socket &peer, Yield &yield)
                 {
                     acceptor_.async_accept(peer.socket_, yield);
                 }
@@ -61,11 +59,11 @@ namespace mio
                 }
                 ~acceptor() = default;
 
-                auto&& get_executor()
+                auto get_executor()
                 {
                     return io_context_.get_executor();
                 }
             };
         } // namespace tcp
-    }     // namespace interprocess
+    }     // namespace network
 } // namespace mio

@@ -5,7 +5,6 @@
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 
 #include "parallelism/ring_queue.hpp"
 #include "parallelism/channel.hpp"
@@ -27,9 +26,8 @@ namespace mio
 
                 std::unique_ptr<boost::interprocess::managed_shared_memory> shared_memory_;
                 parallelism::channel<char> *channel_ = nullptr;
-                
-                parallelism::ring_queue<detail::request> *request_queue_;
 
+                parallelism::ring_queue<detail::request> *request_queue_;
 
                 bool is_clinet_;
 
@@ -44,14 +42,14 @@ namespace mio
                     is_clinet_ = 1;
                 }
 
-                socket(socket && other) : io_context_(other.io_context_), shared_memory_(std::move(other.shared_memory_))
+                socket(socket &&other) : io_context_(other.io_context_), shared_memory_(std::move(other.shared_memory_))
                 {
-                    
+
                     channel_ = other.channel_;
                     request_queue_ = other.request_queue_;
                     is_clinet_ = other.is_clinet_;
 
-                    other.channel_= nullptr;
+                    other.channel_ = nullptr;
                 }
 
                 void connect(const std::string &address)
@@ -68,8 +66,8 @@ namespace mio
                     request_queue_->push(req);
                 }
 
-                template<typename Yield>
-                void async_connect(const std::string &address, Yield& yield)
+                template <typename Yield>
+                void async_connect(const std::string &address, Yield &yield)
                 {
                     using namespace boost::interprocess;
 
@@ -93,14 +91,14 @@ namespace mio
                     return channel_->read_some(is_clinet_, (char *)data, size);
                 }
 
-                template<typename Yield>
-                size_t async_write_some(const void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_write_some(const void *data, size_t size, Yield &yield)
                 {
                     return channel_->write_some(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                template<typename Yield>
-                size_t async_read_some(void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_read_some(void *data, size_t size, Yield &yield)
                 {
                     return channel_->read_some(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
@@ -115,14 +113,14 @@ namespace mio
                     return channel_->read(is_clinet_, (char *)data, size);
                 }
 
-                template<typename Yield>
-                size_t async_write(const void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_write(const void *data, size_t size, Yield &yield)
                 {
                     return channel_->write(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
 
-                template<typename Yield>
-                size_t async_read(void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_read(void *data, size_t size, Yield &yield)
                 {
                     return channel_->read(is_clinet_, (char *)data, size, [&](size_t) { this->io_context_.post(yield); });
                 }
@@ -151,7 +149,7 @@ namespace mio
                     return channel_;
                 }
 
-                auto&& get_executor()
+                auto get_executor()
                 {
                     return io_context_.get_executor();
                 }

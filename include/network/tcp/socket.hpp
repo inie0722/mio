@@ -3,7 +3,6 @@
 #include <string>
 
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 
 #include "network/tool/host_resolver.hpp"
 
@@ -27,7 +26,7 @@ namespace mio
                 {
                 }
 
-                socket(socket && other) : io_context_(other.io_context_), socket_(std::move(other.socket_))
+                socket(socket &&other) : io_context_(other.io_context_), socket_(std::move(other.socket_))
                 {
                 }
 
@@ -38,8 +37,8 @@ namespace mio
                     socket_.connect(host.begin()->endpoint());
                 }
 
-                template<typename Yield>
-                void async_connect(const std::string &address, Yield& yield)
+                template <typename Yield>
+                void async_connect(const std::string &address, Yield &yield)
                 {
                     auto host = host_resolve(io_context_, address);
 
@@ -58,15 +57,15 @@ namespace mio
                     return socket_.read_some(buffer(data, size));
                 }
 
-                template<typename Yield>
-                size_t async_write_some(const void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_write_some(const void *data, size_t size, Yield &yield)
                 {
                     using namespace boost::asio;
                     return socket_.async_write_some(buffer(data, size), yield);
                 }
 
-                template<typename Yield>
-                size_t async_read_some(void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_read_some(void *data, size_t size, Yield &yield)
                 {
                     using namespace boost::asio;
                     return socket_.async_read_some(buffer(data, size), yield);
@@ -84,15 +83,15 @@ namespace mio
                     return boost::asio::read(socket_, buffer(data, size));
                 }
 
-                template<typename Yield>
-                size_t async_write(const void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_write(const void *data, size_t size, Yield &yield)
                 {
                     using namespace boost::asio;
                     return boost::asio::async_write(socket_, buffer(data, size), yield);
                 }
 
-                template<typename Yield>
-                size_t async_read(void *data, size_t size, Yield& yield)
+                template <typename Yield>
+                size_t async_read(void *data, size_t size, Yield &yield)
                 {
                     using namespace boost::asio;
                     return boost::asio::async_read(socket_, buffer(data, size), yield);
@@ -110,11 +109,11 @@ namespace mio
                     return socket_.is_open();
                 }
 
-                auto&& get_executor()
+                auto get_executor()
                 {
                     return io_context_.get_executor();
                 }
             };
         } // namespace tcp
-    }     // namespace interprocess
+    }     // namespace network
 } // namespace mio
