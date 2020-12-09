@@ -79,6 +79,11 @@ namespace mio
                 {
                     close();
                 }
+
+                auto&& get_executor()
+                {
+                    return io_context_.get_executor();
+                }
             };
         } // namespace pipe
     }     // namespace interprocess

@@ -150,6 +150,11 @@ namespace mio
                 {
                     return channel_;
                 }
+
+                auto&& get_executor()
+                {
+                    return io_context_.get_executor();
+                }
             };
         } // namespace pipe
     }     // namespace interprocess

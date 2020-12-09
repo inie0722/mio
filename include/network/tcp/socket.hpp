@@ -109,6 +109,11 @@ namespace mio
                 {
                     return socket_.is_open();
                 }
+
+                auto&& get_executor()
+                {
+                    return io_context_.get_executor();
+                }
             };
         } // namespace tcp
     }     // namespace interprocess

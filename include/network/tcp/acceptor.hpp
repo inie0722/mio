@@ -60,6 +60,11 @@ namespace mio
                     acceptor_.close();
                 }
                 ~acceptor() = default;
+
+                auto&& get_executor()
+                {
+                    return io_context_.get_executor();
+                }
             };
         } // namespace tcp
     }     // namespace interprocess
