@@ -13,14 +13,15 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <list>
 #include <functional>
 
 #include "mq/detail/round_robin.hpp"
+#include "mq/detail/basic_socket.hpp"
 
 #include "mq/message.hpp"
 #include "mq/future.hpp"
-#include "network/tcp.hpp"
-#include "interprocess/pipe.hpp"
+#include "mq/transfer.hpp"
 
 namespace mio
 {
@@ -30,19 +31,16 @@ namespace mio
         {
         public:
         
-            using socket_t = mio::network::tcp::socket;
-            using acceptor_t = mio::network::tcp::acceptor;
-        /*
-            using socket_t = mio::interprocess::pipe::socket;
-            using acceptor_t = mio::interprocess::pipe::acceptor;
-        */
+            using socket_t = detail::basic_socket;
+            using acceptor_t = detail::basic_acceptor;
+
             class session : public std::enable_shared_from_this<session>
             {
             private:
                 friend class manager;
                 manager* manager_;
 
-                socket_t socket_;
+                std::unique_ptr<socket_t> socket_;
                 boost::fibers::buffered_channel<std::pair<std::shared_ptr<message>, std::shared_ptr<promise>>> write_pipe_;
 
                 boost::fibers::fiber read_fiber_;
@@ -77,12 +75,12 @@ namespace mio
                             uint64_t name_size = msg.first->name.size();
                             uint64_t data_size = msg.first->data.size();
 
-                            socket_.async_write(&msg.first->type, sizeof(msg.first->type), boost::fibers::asio::yield);
-                            socket_.async_write(&msg.first->uuid, sizeof(msg.first->uuid), boost::fibers::asio::yield);
-                            socket_.async_write(&name_size, sizeof(name_size), boost::fibers::asio::yield);
-                            socket_.async_write(&data_size, sizeof(data_size), boost::fibers::asio::yield);
-                            socket_.async_write(&msg.first->name[0], name_size, boost::fibers::asio::yield);
-                            socket_.async_write(&msg.first->data[0], data_size, boost::fibers::asio::yield);
+                            socket_->write(&msg.first->type, sizeof(msg.first->type));
+                            socket_->write(&msg.first->uuid, sizeof(msg.first->uuid));
+                            socket_->write(&name_size, sizeof(name_size));
+                            socket_->write(&data_size, sizeof(data_size));
+                            socket_->write(&msg.first->name[0], name_size);
+                            socket_->write(&msg.first->data[0], data_size);
                         }
                     }
                     catch (const std::exception &e)
@@ -101,16 +99,16 @@ namespace mio
                             uint64_t name_size;
                             uint64_t data_size;
 
-                            socket_.async_read(&msg->type, sizeof(msg->type), boost::fibers::asio::yield);
-                            socket_.async_read(&msg->uuid, sizeof(msg->uuid), boost::fibers::asio::yield);
-                            socket_.async_read(&name_size, sizeof(name_size), boost::fibers::asio::yield);
-                            socket_.async_read(&data_size, sizeof(data_size), boost::fibers::asio::yield);
+                            socket_->read(&msg->type, sizeof(msg->type));
+                            socket_->read(&msg->uuid, sizeof(msg->uuid));
+                            socket_->read(&name_size, sizeof(name_size));
+                            socket_->read(&data_size, sizeof(data_size));
 
                             msg->name.resize(name_size);
                             msg->data.resize(data_size);
 
-                            socket_.async_read(&msg->name[0], name_size, boost::fibers::asio::yield);
-                            socket_.async_read(&msg->data[0], data_size, boost::fibers::asio::yield);
+                            socket_->read(&msg->name[0], name_size);
+                            socket_->read(&msg->data[0], data_size);
 
                             if (msg->type == message_type::RESPONSE)
                             {
@@ -139,7 +137,7 @@ namespace mio
                 }
 
             public:
-                session(manager *manager, socket_t &&socket) : manager_(manager), socket_(std::move(socket)), write_pipe_(4096)
+                session(manager *manager, decltype(socket_) &&socket) : manager_(manager), socket_(std::move(socket)), write_pipe_(4096)
                 {
                     read_fiber_ = boost::fibers::fiber(&session::do_read, this);
                     write_fiber_ = boost::fibers::fiber(&session::do_write, this);
@@ -156,7 +154,7 @@ namespace mio
                     //manager_->close_handler_(*this);
 
                     //关闭读和写 纤程
-                    socket_.close();
+                    socket_->close();
                     write_pipe_.close();
 
                     read_fiber_.join();
@@ -255,7 +253,7 @@ namespace mio
 
                 //管理所有bind地址
                 boost::fibers::mutex acceptor_list_mutex_;
-                std::list<acceptor_t> acceptor_list_;
+                std::list<std::unique_ptr<acceptor_t>> acceptor_list_;
 
                 //asio调度器分配
                 std::atomic<size_t> io_context_count_;
@@ -300,7 +298,7 @@ namespace mio
                     acceptor_list_mutex_.lock();
                     for (auto & acceptor : acceptor_list_)
                     {
-                        acceptor.close();
+                        acceptor->close();
                     }
                     acceptor_list_mutex_.unlock();
 
@@ -340,14 +338,15 @@ namespace mio
                     message_handler_mutex_.unlock();
                 }
 
+                template<typename Protocol>
                 void bind(const std::string &address)
                 {
                     acceptor_list_mutex_.lock();
-                    acceptor_list_.push_back(acceptor_t(*io_context_[0]));
+                    acceptor_list_.push_back(std::make_unique<typename transfer<Protocol>::acceptor>(*get_io_context()));
                     auto it = --acceptor_list_.end();
                     acceptor_list_mutex_.unlock();
 
-                    it->bind(address);
+                    (*it)->bind(address);
 
                     auto io_context = get_io_context();
 
@@ -355,10 +354,9 @@ namespace mio
                         boost::fibers::fiber([&, it, address]() {
                             while (1)
                             {
-                                socket_t socket_(*get_io_context());
-                                it->async_accept(socket_, boost::fibers::asio::yield);
+                                auto socket = (*it)->accept(*get_io_context());
 
-                                auto session_ptr = std::make_shared<session>(this, std::move(socket_));
+                                auto session_ptr = std::make_shared<session>(this, std::move(socket));
 
                                 session_set_mutex_.lock();
                                 session_set_.insert(session_ptr);
@@ -370,15 +368,19 @@ namespace mio
                     });
                 }
 
+                template<typename Protocol>
                 void connect(const std::string &address)
                 {
+                    using transfer = transfer<Protocol>;
+
                     auto io_context = get_io_context();
                     io_context->post([&, address]() {
                         boost::fibers::fiber([&, address]() {
-                            socket_t socket_(*io_context_[0]);
-                            socket_.async_connect(address, boost::fibers::asio::yield);
 
-                            auto session_ptr = std::make_shared<session>(this, std::move(socket_));
+                            auto socket = std::make_unique<transfer::socket>(*get_io_context());
+                            socket->connect(address);
+
+                            auto session_ptr = std::make_shared<session>(this, std::move(socket));
                             
                             session_set_mutex_.lock();
                             session_set_.insert(session_ptr);

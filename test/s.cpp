@@ -1,7 +1,14 @@
 #include <iostream>
+#include "network/tcp.hpp"
 #include "mq/manager.hpp"
 
 using namespace mio::mq;
+
+struct protocol
+{
+    using socket_t = mio::network::tcp::socket;
+    using acceptor_t = mio::network::tcp::acceptor;
+};
 
 int main(void)
 {
@@ -20,7 +27,7 @@ int main(void)
         //msg.first.lock()->close();
     });
 
-    m.bind("ipv4:127.0.0.1:9999");
+    m.bind<protocol>("ipv4:127.0.0.1:9999");
 
     mio::mq::message msg;
     msg.type = mio::mq::message_type::NOTICE;
