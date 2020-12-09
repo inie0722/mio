@@ -77,12 +77,12 @@ namespace mio
                             uint64_t name_size = msg.first->name.size();
                             uint64_t data_size = msg.first->data.size();
 
-                            socket_.write(&msg.first->type, sizeof(msg.first->type), boost::fibers::asio::yield);
-                            socket_.write(&msg.first->uuid, sizeof(msg.first->uuid), boost::fibers::asio::yield);
-                            socket_.write(&name_size, sizeof(name_size), boost::fibers::asio::yield);
-                            socket_.write(&data_size, sizeof(data_size), boost::fibers::asio::yield);
-                            socket_.write(&msg.first->name[0], name_size, boost::fibers::asio::yield);
-                            socket_.write(&msg.first->data[0], data_size, boost::fibers::asio::yield);
+                            socket_.async_write(&msg.first->type, sizeof(msg.first->type), boost::fibers::asio::yield);
+                            socket_.async_write(&msg.first->uuid, sizeof(msg.first->uuid), boost::fibers::asio::yield);
+                            socket_.async_write(&name_size, sizeof(name_size), boost::fibers::asio::yield);
+                            socket_.async_write(&data_size, sizeof(data_size), boost::fibers::asio::yield);
+                            socket_.async_write(&msg.first->name[0], name_size, boost::fibers::asio::yield);
+                            socket_.async_write(&msg.first->data[0], data_size, boost::fibers::asio::yield);
                         }
                     }
                     catch (const std::exception &e)
@@ -101,16 +101,16 @@ namespace mio
                             uint64_t name_size;
                             uint64_t data_size;
 
-                            socket_.read(&msg->type, sizeof(msg->type), boost::fibers::asio::yield);
-                            socket_.read(&msg->uuid, sizeof(msg->uuid), boost::fibers::asio::yield);
-                            socket_.read(&name_size, sizeof(name_size), boost::fibers::asio::yield);
-                            socket_.read(&data_size, sizeof(data_size), boost::fibers::asio::yield);
+                            socket_.async_read(&msg->type, sizeof(msg->type), boost::fibers::asio::yield);
+                            socket_.async_read(&msg->uuid, sizeof(msg->uuid), boost::fibers::asio::yield);
+                            socket_.async_read(&name_size, sizeof(name_size), boost::fibers::asio::yield);
+                            socket_.async_read(&data_size, sizeof(data_size), boost::fibers::asio::yield);
 
                             msg->name.resize(name_size);
                             msg->data.resize(data_size);
 
-                            socket_.read(&msg->name[0], name_size, boost::fibers::asio::yield);
-                            socket_.read(&msg->data[0], data_size, boost::fibers::asio::yield);
+                            socket_.async_read(&msg->name[0], name_size, boost::fibers::asio::yield);
+                            socket_.async_read(&msg->data[0], data_size, boost::fibers::asio::yield);
 
                             if (msg->type == message_type::RESPONSE)
                             {
@@ -356,7 +356,7 @@ namespace mio
                             while (1)
                             {
                                 socket_t socket_(*get_io_context());
-                                it->accept(socket_, boost::fibers::asio::yield);
+                                it->async_accept(socket_, boost::fibers::asio::yield);
 
                                 auto session_ptr = std::make_shared<session>(this, std::move(socket_));
 
@@ -376,7 +376,7 @@ namespace mio
                     io_context->post([&, address]() {
                         boost::fibers::fiber([&, address]() {
                             socket_t socket_(*io_context_[0]);
-                            socket_.connect(address, boost::fibers::asio::yield);
+                            socket_.async_connect(address, boost::fibers::asio::yield);
 
                             auto session_ptr = std::make_shared<session>(this, std::move(socket_));
                             
