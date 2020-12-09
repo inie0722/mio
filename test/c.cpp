@@ -4,8 +4,15 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "mq/manager.hpp"
+#include "network/tcp.hpp"
 
 using namespace mio::mq;
+
+struct protocol
+{
+    using socket_t = mio::network::tcp::socket;
+    using acceptor_t = mio::network::tcp::acceptor;
+};
 
 int main(void)
 {
@@ -30,7 +37,7 @@ int main(void)
         //std::cout << session->get_uuid() << std::endl;
     });
 
-    m.connect("ipv4:127.0.0.1:9999");
+    m.connect<protocol>("ipv4:127.0.0.1:9999");
     
     while(1)
     {

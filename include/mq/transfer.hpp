@@ -19,17 +19,14 @@ namespace mio
             using socket_t = typename Protocol::socket_t;
             using acceptor_t = typename Protocol::acceptor_t;
 
-            class socket : public detail::basic_socket, private socket_t
+            class socket : public detail::basic_socket, public socket_t
             {
             public:
                 socket(boost::asio::io_context &io_context) : socket_t(io_context)
                 {
                 }
 
-                virtual ~socket()
-                {
-                    
-                }
+                virtual ~socket() = default;
 
                 virtual void connect(const std::string &address)
                 {
@@ -52,7 +49,7 @@ namespace mio
                 }
             };
 
-            class acceptor : public detail::basic_acceptor, private acceptor_t
+            class acceptor : public detail::basic_acceptor, public acceptor_t
             {
             public:
                 acceptor(boost::asio::io_context &io_context) : acceptor_t(io_context)
@@ -69,7 +66,8 @@ namespace mio
                 virtual std::unique_ptr<detail::basic_socket> accept(boost::asio::io_context &io_context)
                 {
                     std::unique_ptr<detail::basic_socket> ptr = std::make_unique<socket>(io_context);
-                    acceptor_t::accept((socket_t &)*ptr);
+
+                    acceptor_t::async_accept(static_cast<socket_t &>(static_cast<socket &>(*ptr)), boost::fibers::asio::yield);
 
                     return ptr;
                 }
