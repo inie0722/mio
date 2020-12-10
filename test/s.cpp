@@ -24,8 +24,6 @@ int main(void)
         msg_res->data= msg.second->data;
         msg_res->uuid = msg.second->uuid;
         msg_res->type = mio::mq::message_type::RESPONSE;
-
-        sleep(3);
         msg.first.lock()->response(msg_res);
         //msg.first.lock()->close();
     });
@@ -42,7 +40,7 @@ int main(void)
         session.lock()->add_group("test");
     });
 
-    while(1)
+    while (1)    
     {
         m.push("test", msg);
         sleep(1);

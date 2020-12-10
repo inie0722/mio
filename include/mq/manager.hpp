@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/fiber/all.hpp>
 
@@ -7,7 +8,6 @@
 #include <utility>
 #include <unordered_set>
 #include <unordered_map>
-#include <boost/unordered_map.hpp>
 #include <string>
 #include <shared_mutex>
 #include <variant>
@@ -33,7 +33,13 @@ namespace mio
         public:
             using socket_t = detail::basic_socket;
             using acceptor_t = detail::basic_acceptor;
+            class session;
 
+        private:
+            using session_set_t = std::unordered_set<std::shared_ptr<session>>;
+            using session_list_t = std::list<std::shared_ptr<session>>;
+
+        public:
             class session : public std::enable_shared_from_this<session>
             {
             private:
@@ -48,11 +54,11 @@ namespace mio
 
                 //请求消息的回复信息
                 boost::fibers::mutex uuid_promise__mutex_;
-                boost::unordered_map<boost::uuids::uuid, std::shared_ptr<promise>, boost::hash<boost::uuids::uuid>> uuid_promise_map_;
+                std::unordered_map<boost::uuids::uuid, std::shared_ptr<promise>, boost::hash<boost::uuids::uuid>> uuid_promise_map_;
 
                 //该会话加入的所以组
-                std::shared_mutex group_set_mutex_;
-                std::unordered_set<std::string> group_set_;
+                std::shared_mutex group_map_mutex_;
+                std::unordered_map<std::string, session_list_t::iterator> group_map_;
 
                 size_t level_ = 0;
 
@@ -119,9 +125,7 @@ namespace mio
                                 auto &handler = manager_->message_handler_[msg->name];
                                 if (std::holds_alternative<message_handler_t>(handler.second))
                                 {
-                                    boost::fibers::fiber(std::get<message_handler_t>(handler.second),
-                                                         message_args{this->shared_from_this(), msg})
-                                        .detach();
+                                    boost::fibers::fiber(std::get<message_handler_t>(handler.second), message_args{this->shared_from_this(), msg}).detach();
                                 }
                                 else
                                 {
@@ -161,14 +165,14 @@ namespace mio
                     write_fiber_.join();
 
                     //移除所有定义列表
-                    group_set_mutex_.lock();
+                    group_map_mutex_.lock();
                     manager_->group_map_mutex_.lock();
-                    for (auto &group_name : group_set_)
+                    for (auto &group : group_map_)
                     {
-                        manager_->group_map_[group_name].erase(shared_from_this());
+                        manager_->group_map_[group.first].erase(group.second);
                     }
                     manager_->group_map_mutex_.unlock();
-                    group_set_mutex_.unlock();
+                    group_map_mutex_.unlock();
 
                     manager_->session_set_mutex_.lock();
                     manager_->session_set_.erase(shared_from_this());
@@ -194,26 +198,26 @@ namespace mio
 
                 void add_group(const std::string &group_name)
                 {
-                    group_set_mutex_.lock();
+                    group_map_mutex_.lock();
                     manager_->group_map_mutex_.lock();
 
-                    manager_->group_map_[group_name].insert(shared_from_this());
-                    group_set_.insert(group_name);
+                    manager_->group_map_[group_name].push_front(shared_from_this());
+                    group_map_[group_name] = manager_->group_map_[group_name].begin();
 
                     manager_->group_map_mutex_.unlock();
-                    group_set_mutex_.unlock();
+                    group_map_mutex_.unlock();
                 }
 
                 void remove_group(const std::string &group_name)
                 {
-                    group_set_mutex_.lock();
+                    group_map_mutex_.lock();
                     manager_->group_map_mutex_.lock();
 
-                    manager_->group_map_[group_name].erase(shared_from_this());
-                    group_set_.erase(group_name);
+                    manager_->group_map_[group_name].erase(group_map_[group_name]);
+                    group_map_.erase(group_name);
 
                     manager_->group_map_mutex_.unlock();
-                    group_set_mutex_.unlock();
+                    group_map_mutex_.unlock();
                 }
 
                 void set_level(size_t level)
@@ -224,7 +228,6 @@ namespace mio
 
         private:
             friend class session;
-            using session_set_t = std::unordered_set<std::shared_ptr<session>>;
 
             //收到消息的处理程序
             using message_args = std::pair<std::weak_ptr<session>, std::shared_ptr<message>>;
@@ -234,13 +237,13 @@ namespace mio
             std::shared_mutex message_handler_mutex_;
             std::unordered_map<std::string, std::pair<size_t, std::variant<message_handler_t, message_queue_t>>> message_handler_;
 
-            //组列表
-            std::shared_mutex group_map_mutex_;
-            std::unordered_map<std::string, session_set_t> group_map_;
-
             //会话set
             boost::fibers::recursive_mutex session_set_mutex_;
             session_set_t session_set_;
+
+            //组列表
+            std::shared_mutex group_map_mutex_;
+            std::unordered_map<std::string, session_list_t> group_map_;
 
             //当接受客户端 或 连接上服务器将 触发的回调
             using verification_handler_t = std::function<void(const std::string &address, std::weak_ptr<session>)>;
