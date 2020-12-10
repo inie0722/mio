@@ -4,14 +4,16 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "mq/manager.hpp"
-#include "network/tcp.hpp"
+#include "interprocess/pipe.hpp"
+
+#include "mq/manager.hpp"
 
 using namespace mio::mq;
 
 struct protocol
 {
-    using socket_t = mio::network::tcp::socket;
-    using acceptor_t = mio::network::tcp::acceptor;
+    using socket_t = mio::interprocess::pipe::socket;
+    using acceptor_t = mio::interprocess::pipe::acceptor;
 };
 
 int main(void)

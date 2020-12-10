@@ -24,7 +24,7 @@ namespace mio
                 std::string address_;
                 boost::asio::io_context &io_context_;
 
-                std::unique_ptr<boost::interprocess::managed_shared_memory> shared_memory_;
+                std::shared_ptr<boost::interprocess::managed_shared_memory> shared_memory_;
                 parallelism::channel<char> *channel_ = nullptr;
 
                 parallelism::ring_queue<detail::request> *request_queue_;
@@ -32,7 +32,7 @@ namespace mio
                 bool is_clinet_;
 
             public:
-                socket(decltype(io_context_) &io_context, const decltype(channel_) &channel) : io_context_(io_context), channel_(channel)
+                socket(decltype(io_context_) &io_context, const decltype(shared_memory_) & shared_memory, const decltype(channel_) &channel) : io_context_(io_context), shared_memory_(shared_memory), channel_(channel)
                 {
                     is_clinet_ = 0;
                 }
@@ -127,6 +127,8 @@ namespace mio
 
                 void close()
                 {
+                     using namespace boost::interprocess;
+                     
                     if (channel_ != nullptr)
                     {
                         if (channel_->get_status() == parallelism::channel<char>::DISCONNECTED)
@@ -135,6 +137,7 @@ namespace mio
                         }
                         channel_->close();
 
+                        shared_memory_object::remove(address_.c_str());
                         channel_ = nullptr;
                     }
                 }
