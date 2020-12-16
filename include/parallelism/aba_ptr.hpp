@@ -7,7 +7,7 @@ class aba_ptr
 {
 private:
     friend class std::atomic<aba_ptr<T_>>;
-    static constexpr uint64_t COUNT_MASK = 0XFFull << 48;
+    static constexpr uint64_t COUNT_MASK = 0XFFFFull << 48;
 
     static constexpr uint64_t POINTER_MASK = ~COUNT_MASK;
 
@@ -63,6 +63,9 @@ namespace std
     class atomic<aba_ptr<T_>>
     {
     private:
+        static constexpr uint64_t COUNT_MASK = aba_ptr<T_>::COUNT_MASK;
+        static constexpr uint64_t POINTER_MASK = aba_ptr<T_>::POINTER_MASK;
+
         std::atomic<uint64_t> ptr_;
 
     public:
@@ -103,17 +106,18 @@ namespace std
 
         bool compare_exchange_weak(aba_ptr<T_> &expected, aba_ptr<T_> desired, std::memory_order failure = std::memory_order_seq_cst)
         {
-            uint16_t count = (desired.ptr_ & desired.COUNT_MASK) + 1;
+            uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
 
-            uint64_t des = ((uint64_t)count << 48) + desired.ptr_ & desired.POINTER_MASK;
+            uint64_t des = ((uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
+
             return ptr_.compare_exchange_weak(expected.ptr_, des, failure);
         }
 
         bool compare_exchange_strong(aba_ptr<T_> &expected, aba_ptr<T_> desired, std::memory_order failure = std::memory_order_seq_cst)
         {
-            uint16_t count = (desired.ptr_ & desired.COUNT_MASK) + 1;
+            uint16_t count = (expected.ptr_ & COUNT_MASK) + 1;
 
-            uint64_t des = ((uint64_t)count << 48) + desired.ptr_ & desired.POINTER_MASK;
+            uint64_t des = ((uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
             return ptr_.compare_exchange_weak(expected.ptr_, des, failure);
         }
 
