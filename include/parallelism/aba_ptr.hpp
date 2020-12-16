@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <atomic>
 
 namespace mio
@@ -68,9 +69,11 @@ namespace std
     template <typename T_>
     class atomic<mio::parallelism::aba_ptr<T_>>
     {
+    public:
+        using aba_ptr = mio::parallelism::aba_ptr<T_>;
     private:
-        static constexpr uint64_t COUNT_MASK = aba_ptr<T_>::COUNT_MASK;
-        static constexpr uint64_t POINTER_MASK = aba_ptr<T_>::POINTER_MASK;
+        static constexpr uint64_t COUNT_MASK = aba_ptr::COUNT_MASK;
+        static constexpr uint64_t POINTER_MASK = aba_ptr::POINTER_MASK;
 
         std::atomic<uint64_t> ptr_;
 
@@ -79,38 +82,38 @@ namespace std
         {
             ptr_ = 0;
         }
-        atomic(const aba_ptr<T_> &ptr)
+        atomic(const aba_ptr &ptr)
         {
             ptr_ = ptr.ptr_;
         }
 
-        atomic &operator=(aba_ptr<T_> desired)
+        atomic &operator=(aba_ptr desired)
         {
             store(desired);
             return *this;
         }
 
-        operator aba_ptr<T_>()
+        operator aba_ptr()
         {
             return load();
         }
 
-        void store(aba_ptr<T_> desired, std::memory_order failure = std::memory_order_seq_cst)
+        void store(aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
         {
             ptr_.store(desired.ptr_, failure);
         }
 
-        aba_ptr<T_> load(std::memory_order failure = std::memory_order_seq_cst)
+        aba_ptr load(std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr<T_>(ptr_.load(failure));
+            return aba_ptr(ptr_.load(failure));
         }
 
-        aba_ptr<T_> exchange(aba_ptr<T_> desired, std::memory_order failure = std::memory_order_seq_cst)
+        aba_ptr exchange(aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr<T_>(ptr_.exchange(desired, failure));
+            return aba_ptr(ptr_.exchange(desired, failure));
         }
 
-        bool compare_exchange_weak(aba_ptr<T_> &expected, aba_ptr<T_> desired, std::memory_order failure = std::memory_order_seq_cst)
+        bool compare_exchange_weak(aba_ptr &expected, aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
         {
             uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
 
@@ -119,7 +122,7 @@ namespace std
             return ptr_.compare_exchange_weak(expected.ptr_, des, failure);
         }
 
-        bool compare_exchange_strong(aba_ptr<T_> &expected, aba_ptr<T_> desired, std::memory_order failure = std::memory_order_seq_cst)
+        bool compare_exchange_strong(aba_ptr &expected, aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
         {
             uint16_t count = (expected.ptr_ & COUNT_MASK) + 1;
 
@@ -127,14 +130,14 @@ namespace std
             return ptr_.compare_exchange_weak(expected.ptr_, des, failure);
         }
 
-        aba_ptr<T_> fetch_add(std::ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
+        aba_ptr fetch_add(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr<T_>(ptr_.fetch_add(arg, failure));
+            return aba_ptr(ptr_.fetch_add(arg, failure));
         }
 
-        aba_ptr<T_> fetch_sub(std::ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
+        aba_ptr fetch_sub(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr<T_>(ptr_.fetch_sub(arg, failure));
+            return aba_ptr(ptr_.fetch_sub(arg, failure));
         }
     };
 } // namespace std
