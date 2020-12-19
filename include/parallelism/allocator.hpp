@@ -66,7 +66,7 @@ namespace mio
 
             void deallocate(aba_ptr<T_> p)
             {
-                aba_ptr<node> n = p;
+                aba_ptr<node> n = static_cast<aba_ptr<node>>(p);
                 aba_ptr<node> exp = free_list;
 
                 n->next = exp;

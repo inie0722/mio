@@ -67,7 +67,7 @@ namespace mio
             }
 
             template <typename AIMS>
-            operator aba_ptr<AIMS>()
+            explicit operator aba_ptr<AIMS>()
             {
                 return aba_ptr<AIMS>(ptr_);
             }
