@@ -217,6 +217,16 @@ namespace mio
             {
                 return ref_node_->ptr;
             }
+
+            T_ &operator*()
+            {
+                return *get();
+            }
+
+            T_ *operator->()
+            {
+                return get();
+            }
         };
 
     } // namespace parallelism

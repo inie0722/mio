@@ -48,10 +48,10 @@ namespace mio
             aba_ptr<T_> allocate()
             {
                 aba_ptr<node> exp = free_list;
-                aba_ptr<node> ret;
-                do
+                aba_ptr<node> ret = exp;
+
+                while (!exp || !free_list.compare_exchange_weak(exp, exp->next))
                 {
-                    //没有可以节点了 就自己分配一个
                     if (exp == nullptr)
                     {
                         ret = new node;
@@ -59,7 +59,7 @@ namespace mio
                     }
 
                     ret = exp;
-                } while (!free_list.compare_exchange_weak(exp, exp->next));
+                }
 
                 return static_cast<aba_ptr<T_>>(ret);
             }
@@ -68,11 +68,14 @@ namespace mio
             {
                 aba_ptr<node> n = p;
                 aba_ptr<node> exp = free_list;
-                do
+
+                n->next = exp;
+                while (!free_list.compare_exchange_weak(exp, n))
                 {
                     n->next = exp;
-                } while (!free_list.compare_exchange_weak(exp, n));
+                }
             }
         };
     } // namespace parallelism
 } // namespace mio
+
