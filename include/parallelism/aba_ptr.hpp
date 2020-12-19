@@ -13,11 +13,15 @@ namespace mio
         {
         private:
             friend class std::atomic<aba_ptr<T_>>;
+
+            template <typename>
+            friend class aba_ptr;
+
             static constexpr uint64_t COUNT_MASK = 0XFFFFull << 48;
 
             static constexpr uint64_t POINTER_MASK = ~COUNT_MASK;
 
-            uint64_t ptr_ = 0;
+            uint64_t ptr_;
 
             aba_ptr(uint64_t ptr)
             {
@@ -61,6 +65,12 @@ namespace mio
             {
                 return get();
             }
+
+            template <typename AIMS>
+            operator aba_ptr<AIMS>()
+            {
+                return aba_ptr<AIMS>(ptr_);
+            }
         };
     } // namespace parallelism
 } // namespace mio
@@ -72,6 +82,7 @@ namespace std
     {
     public:
         using aba_ptr = mio::parallelism::aba_ptr<T_>;
+
     private:
         static constexpr uint64_t COUNT_MASK = aba_ptr::COUNT_MASK;
         static constexpr uint64_t POINTER_MASK = aba_ptr::POINTER_MASK;
@@ -79,10 +90,8 @@ namespace std
         std::atomic<uint64_t> ptr_;
 
     public:
-        atomic()
-        {
-            ptr_ = 0;
-        }
+        atomic() = default;
+
         atomic(const aba_ptr &ptr)
         {
             ptr_ = ptr.ptr_;
