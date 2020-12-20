@@ -8,6 +8,8 @@ add_executable(boost_queue boost_queue.cpp)
 
 add_executable(stack stack.cpp)
 
+add_executable(queue queue.cpp)
+
 add_executable(boost_spsc_queue boost_spsc_queue.cpp)
 
 #add_executable(test test.cpp)
@@ -23,4 +25,6 @@ target_link_libraries(boost_queue pthread)
 target_link_libraries(boost_spsc_queue pthread)
 
 target_link_libraries(stack pthread)
+
+target_link_libraries(queue pthread)
 #target_link_libraries(test pthread)
