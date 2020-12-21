@@ -6,11 +6,11 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/asio.hpp>
 
-#include "parallelism/ring_queue.hpp"
-#include "parallelism/channel.hpp"
+#include "mio/parallelism/ring_queue.hpp"
+#include "mio/parallelism/channel.hpp"
 
-#include "interprocess/pipe/acceptor.hpp"
-#include "interprocess/pipe/detail.hpp"
+#include "mio/interprocess/pipe/acceptor.hpp"
+#include "mio/interprocess/pipe/detail.hpp"
 
 namespace mio
 {

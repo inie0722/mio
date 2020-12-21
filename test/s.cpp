@@ -1,9 +1,9 @@
 #include <iostream>
-#include "network/tcp.hpp"
+#include "mio/network/tcp.hpp"
 
-#include "interprocess/pipe.hpp"
+#include "mio/interprocess/pipe.hpp"
 
-#include "mq/manager.hpp"
+#include "mio/mq/manager.hpp"
 
 using namespace mio::mq;
 

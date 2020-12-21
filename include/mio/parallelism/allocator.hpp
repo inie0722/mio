@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <type_traits>
 
-#include "parallelism/aba_ptr.hpp"
+#include "mio/parallelism/aba_ptr.hpp"
 
 namespace mio
 {

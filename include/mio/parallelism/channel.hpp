@@ -4,7 +4,7 @@
 
 #include <atomic>
 
-#include "parallelism/pipe.hpp"
+#include "mio/parallelism/pipe.hpp"
 
 namespace mio
 {

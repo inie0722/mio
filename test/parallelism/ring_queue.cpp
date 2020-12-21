@@ -1,4 +1,4 @@
-#include "parallelism/ring_queue.hpp"
+#include "mio/parallelism/ring_queue.hpp"
 
 #include <assert.h>
 #include <stdint.h>

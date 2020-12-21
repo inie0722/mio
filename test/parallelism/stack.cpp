@@ -17,7 +17,7 @@ constexpr size_t THREAD_WRITE_NUM = 16;
 
 constexpr size_t THREAD_READ_NUM = 16;
 
-#include "parallelism/stack.hpp"
+#include "mio/parallelism/stack.hpp"
 
 using namespace mio::parallelism;
 

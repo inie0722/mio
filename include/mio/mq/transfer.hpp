@@ -5,8 +5,8 @@
 
 #include <boost/asio.hpp>
 
-#include "mq/detail/round_robin.hpp"
-#include "mq/detail/basic_socket.hpp"
+#include "mio/mq/detail/round_robin.hpp"
+#include "mio/mq/detail/basic_socket.hpp"
 
 namespace mio
 {

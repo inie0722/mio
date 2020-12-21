@@ -17,7 +17,7 @@ constexpr size_t THREAD_WRITE_NUM = 4;
 
 constexpr size_t THREAD_READ_NUM = 4;
 
-#include "parallelism/queue.hpp"
+#include "mio/parallelism/queue.hpp"
 
 using namespace mio::parallelism;
 

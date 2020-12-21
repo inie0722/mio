@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parallelism/channel.hpp"
+#include "mio/parallelism/channel.hpp"
 #include <boost/interprocess/managed_shared_memory.hpp>
 
 namespace mio

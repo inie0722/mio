@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parallelism/detail/ring_buffer.hpp"
+#include "mio/parallelism/detail/ring_buffer.hpp"
 
 #include <stddef.h>
 

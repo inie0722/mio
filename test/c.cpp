@@ -3,10 +3,10 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
-#include "mq/manager.hpp"
-#include "interprocess/pipe.hpp"
+#include "mio/mq/manager.hpp"
+#include "mio/interprocess/pipe.hpp"
 
-#include "mq/manager.hpp"
+#include "mio/mq/manager.hpp"
 
 using namespace mio::mq;
 

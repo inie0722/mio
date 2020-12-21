@@ -12,8 +12,8 @@
 #include <functional>
 #include <algorithm>
 
-#include "tool/metaprogramming.hpp"
-#include "error/assertion.hpp"
+#include "mio/tool/metaprogramming.hpp"
+#include "mio/error/assertion.hpp"
 
 namespace serialization
 {

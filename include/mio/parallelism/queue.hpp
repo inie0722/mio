@@ -1,7 +1,7 @@
 #pragma once
 
-#include "parallelism/aba_ptr.hpp"
-#include "parallelism/allocator.hpp"
+#include "mio/parallelism/aba_ptr.hpp"
+#include "mio/parallelism/allocator.hpp"
 
 namespace mio
 {

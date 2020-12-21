@@ -17,12 +17,12 @@
 #include <list>
 #include <functional>
 
-#include "mq/detail/round_robin.hpp"
-#include "mq/detail/basic_socket.hpp"
+#include "mio/mq/detail/round_robin.hpp"
+#include "mio/mq/detail/basic_socket.hpp"
 
-#include "mq/message.hpp"
-#include "mq/future.hpp"
-#include "mq/transfer.hpp"
+#include "mio/mq/message.hpp"
+#include "mio/mq/future.hpp"
+#include "mio/mq/transfer.hpp"
 
 namespace mio
 {

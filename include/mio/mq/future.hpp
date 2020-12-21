@@ -5,7 +5,7 @@
 
 #include <boost/fiber/buffered_channel.hpp>
 
-#include "mq/message.hpp"
+#include "mio/mq/message.hpp"
 
 namespace mio
 {

@@ -4,8 +4,8 @@
 
 #include <boost/asio.hpp>
 
-#include "network/tcp/socket.hpp"
-#include "network/tool/host_resolver.hpp"
+#include "mio/network/tcp/socket.hpp"
+#include "mio/network/tool/host_resolver.hpp"
 
 namespace mio
 {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "parallelism/detail/ring_buffer.hpp"
-#include "parallelism/utility.hpp"
+#include "mio/parallelism/detail/ring_buffer.hpp"
+#include "mio/parallelism/utility.hpp"
 
 #include <stddef.h>
 

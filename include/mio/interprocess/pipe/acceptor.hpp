@@ -8,9 +8,9 @@
 #include <memory>
 #include <type_traits>
 
-#include "parallelism/ring_queue.hpp"
-#include "interprocess/pipe/socket.hpp"
-#include "interprocess/pipe/detail.hpp"
+#include "mio/parallelism/ring_queue.hpp"
+#include "mio/interprocess/pipe/socket.hpp"
+#include "mio/interprocess/pipe/detail.hpp"
 
 namespace mio
 {

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <atomic>
 
-#include "parallelism/aba_ptr.hpp"
+#include "mio/parallelism/aba_ptr.hpp"
 
 namespace mio
 {
