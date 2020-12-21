@@ -6,7 +6,7 @@
 
 namespace mio
 {
-    namespace parallelism
+    namespace interprocess
     {
         using offset_ptr = boost::interprocess::offset_ptr<void, int64_t, uint64_t>;
 
