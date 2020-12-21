@@ -61,6 +61,27 @@ namespace mio
                 }
             }
 
+            void push(T_ &&val)
+            {
+                auto n = allocator_.allocate();
+                n->value = std::move(val);
+                n->next = nullptr;
+
+                while (1)
+                {
+                    aba_ptr<node> last = tail_.load();
+                    aba_ptr<node> exp = nullptr;
+
+                    //如果 last next 是 null 就代表是最后一个节点
+                    if (last->next.compare_exchange_weak(exp, n))
+                    {
+                        //将tail 指向新节点
+                        tail_.compare_exchange_weak(last, n);
+                        return;
+                    }
+                }
+            }
+
             void pop(T_ &val)
             {
                 while (1)
