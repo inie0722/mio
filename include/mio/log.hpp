@@ -1,230 +1,374 @@
 #pragma once
 
-#include <stdint.h>
-#include <assert.h>
-#include <string.h>
-#include <stddef.h>
+#include "interprocess/shared_memory.hpp"
+#include "parallelism/pipe.hpp"
+#include "serialization/binary.hpp"
+#include "type_traits.hpp"
+#include "chrono.hpp"
 
-#include <fstream>
-#include <thread>
-#include <atomic>
-#include <list>
+#include <fmt/format.h>
+#include <fmt/args.h>
+
+#include <boost/interprocess/containers/list.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <mutex>
-#include <sstream>
-#include <iomanip>
+#include <atomic>
+#include <fstream>
+#include <stdint.h>
 
-#include "mio/parallelism/pipe.hpp"
+#include <iostream>
 
-namespace libcpp
+namespace mio
 {
-    template <typename Format, size_t PIPE_SIZE = 65536, size_t BUUFER_SIZE = 4096>
-    class log
+    namespace detail
+    {
+        class log_base
+        {
+        protected:
+            enum class log_type : uint8_t
+            {
+                STATIC = 1,
+                DYNAMIC = 2,
+                OPEN = 3,
+                CLOSE = 4
+            };
+
+            struct log_line
+            {
+                log_type type;
+                uint64_t size;
+                char data[];
+            };
+
+            struct log_arg
+            {
+                struct open
+                {
+                    uint64_t file_id;
+                    char file_name[];
+                };
+
+                struct close
+                {
+                    uint64_t file_id;
+                };
+
+                struct static_data
+                {
+                    uint64_t line_id;
+                    char format[];
+                };
+
+                struct dynamic_data
+                {
+                    uint64_t file_id;
+                    uint64_t line_id;
+                    uint64_t data_size;
+                    char data[];
+                };
+            };
+        };
+    } // namespace detail
+
+    template <size_t PIPE_SIZE_ = 65536, size_t BUUFER_SIZE_ = 4096>
+    class log_client : public detail::log_base
     {
     private:
-        inline static std::list<pipe<PIPE_SIZE>> list;
-        inline static thread_local typename std::list<pipe<PIPE_SIZE>>::iterator thread_pipe;
-        inline static thread_local char buffer[BUUFER_SIZE];
-        inline static thread_local size_t length = 0;
+        using pipe_t = parallelism::pipe<char>;
+        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, boost::interprocess::managed_shared_memory::segment_manager>>;
 
-        inline static std::mutex mutex;
+        std::string shm_name_;
+        std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
+        list_pipe_t *list_pipe_;
+        list_pipe_t::iterator pipe_it_;
 
-        std::string time_to_string(std::chrono::nanoseconds tm)
+        boost::interprocess::interprocess_mutex *mutex_;
+
+        std::atomic<uint64_t> *file_id;
+
+        std::atomic<uint64_t> *line_id;
+
+        std::unique_ptr<char[]> buffer;
+
+        void constructor()
         {
+            using namespace boost::interprocess;
 
-            using namespace std::chrono;
-            using namespace std::chrono_literals;
-
-            std::chrono::time_point<std::chrono::system_clock> tt(std::chrono::duration_cast<std::chrono::milliseconds>(tm));
-
-            unsigned long long all_ns = tm.count();
-            unsigned long long ms = (unsigned long long)(all_ns % 31536000000000000 % 86400000000000 % 3600000000000 % 60000000000 % 1000000000) / 1000000;
-            unsigned long long us = (unsigned long long)(all_ns % 31536000000000000 % 86400000000000 % 3600000000000 % 60000000000 % 1000000000 % 1000000) / 1000;
-            unsigned long long ns = (unsigned long long)all_ns % 31536000000000000 % 86400000000000 % 3600000000000 % 60000000000 % 1000000000 % 1000000 % 1000;
-
-            std::stringstream ss;
-            auto t = std::chrono::system_clock::to_time_t(tt);
-            ss << std::put_time(std::localtime(&t), "%F %T ");
-
-            char buf[128];
-            sprintf(buf, "%04llu:%04llu:%04llu", ms, us, ns);
-
-            ss << buf;
-            return ss.str();
-        }
-
-    public:
-        static log &get_log()
-        {
-            static thread_local log ret;
-            return ret;
-        }
-
-        log()
-        {
-            mutex.lock();
-            list.push_front(pipe<PIPE_SIZE>());
-            thread_pipe = list.begin();
-            mutex.unlock();
-        }
-
-        ~log()
-        {
-            mutex.lock();
-            list.erase(thread_pipe);
-            mutex.unlock();
-        }
-
-        void run(std::chrono::milliseconds ms)
-        {
-            //64m大小的 共享内存
-            while (1)
+            thread_local bool flag = true;
+            if (flag == true)
             {
-                mutex.lock();
-                for (auto it = list.begin(); it != list.end(); ++it)
-                {
-                    if (it->try_recv(&length, sizeof(size_t)))
-                    {
-                        it->recv(buffer, length);
-                        unpack();
-                    }
-                }
-                mutex.unlock();
+                buffer = std::unique_ptr<char[]>(new char[BUUFER_SIZE_]);
+                shared_memory_ = std::make_unique<interprocess::managed_shared_memory>(open_only, shm_name_.c_str());
 
-                std::this_thread::sleep_for(ms);
+                list_pipe_ = shared_memory_->find<list_pipe_t>("list_pipe").first;
+                mutex_ = shared_memory_->find<boost::interprocess::interprocess_mutex>("mutex").first;
+                file_id = shared_memory_->find<std::atomic<uint64_t>>("file_id").first;
+                line_id = shared_memory_->find<std::atomic<uint64_t>>("line_id").first;
+
+                mutex_->lock();
+                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)());
+                pipe_it_ = list_pipe_->begin();
+                mutex_->unlock();
+
+                flag = false;
             }
         }
 
-        template <typename... Args>
-        void operator()(const char *file, const char *format, Args... args)
+    public:
+        log_client(const std::string &shm_name) : shm_name_(shm_name)
         {
-            length = sizeof(length);
-            pack(file, format, args...);
+            constructor();
         }
-
-    private:
-#define LOG_PACK(Type, Val)                 \
-    template <typename... Args>             \
-    void pack(Type first, Args... args)     \
-    {                                       \
-        buffer[length++] = Val;             \
-        *((Type *)&buffer[length]) = first; \
-        length += sizeof(first);            \
-        pack(args...);                      \
-    }
-
-        template <typename... Args>
-        void pack()
+        ~log_client()
         {
-            length -= sizeof(length);
-            *((size_t *)&buffer[0]) = length;
-            thread_pipe->send(buffer, length + sizeof(length));
-        }
-
-        LOG_PACK(int8_t, 1)
-        LOG_PACK(uint8_t, 2)
-        LOG_PACK(int16_t, 3)
-        LOG_PACK(uint16_t, 4)
-        LOG_PACK(int32_t, 5)
-        LOG_PACK(uint32_t, 6)
-        LOG_PACK(int64_t, 7)
-        LOG_PACK(uint64_t, 8)
-        LOG_PACK(float, 9)
-        LOG_PACK(double, 10)
-        LOG_PACK(long double, 11)
-
-        template <typename... Args>
-        void pack(const char *str, Args... args)
-        {
-            buffer[length++] = 12;
-            size_t str_len = strlen(str) + 1;
-            memcpy(&buffer[length], str, str_len);
-            length += str_len;
-
-            pack(args...);
-        }
-
-        LOG_PACK(std::chrono::nanoseconds, 13)
-
-        void unpack()
-        {
-            //文件名
-            size_t len = 1;
-            std::ofstream file(&buffer[len], std::ios_base::app);
-
-            len = strlen(&buffer[len]) + 2;
-
-            len++;
-            Format format(&buffer[len]);
-            len += strlen(&buffer[len]) + 1;
-
-            for (size_t i = len; i < length;)
+            while ((**pipe_it_).size())
             {
+                std::this_thread::yield();
+            }
 
-                switch (buffer[i++])
+            mutex_->lock();
+            list_pipe_->erase(pipe_it_);
+            mutex_->unlock();
+        }
+
+        uint64_t open_file(const std::string &file)
+        {
+            constructor();
+            //打开文件操作
+            log_line *line = (log_line *)buffer.get();
+            line->type = log_type::OPEN;
+            line->size = sizeof(log_arg::open) + file.length() + 1;
+
+            log_arg::open *arg = (log_arg::open *)line->data;
+            memcpy(arg->file_name, file.c_str(), file.length() + 1);
+            arg->file_id = file_id->fetch_add(1);
+
+            (**pipe_it_).write(reinterpret_cast<char *>(line), sizeof(*line) + line->size);
+            return arg->file_id;
+        }
+
+        void close_file(uint64_t file_id)
+        {
+            //关闭文件操作
+            log_line *line = (log_line *)buffer.get();
+            line->type = log_type::CLOSE;
+            line->size = sizeof(log_arg::close);
+
+            log_arg::close *arg = (log_arg::close *)line->data;
+            arg->file_id = file_id;
+
+            (**pipe_it_).write(reinterpret_cast<char *>(line), sizeof(*line) + line->size);
+        }
+
+        uint64_t send_static(const std::string &format)
+        {
+            //发送静态数据
+            log_line *line = (log_line *)buffer.get();
+            line->type = log_type::STATIC;
+            log_arg::static_data *static_data = (log_arg::static_data *)line->data;
+            static_data->line_id = line_id->fetch_add(1);
+
+            memcpy(static_data->format, format.c_str(), format.length() + 1);
+
+            line->size = sizeof(*static_data) + format.length() + 1;
+            (**pipe_it_).write(reinterpret_cast<char *>(line), sizeof(*line) + line->size);
+            return static_data->line_id;
+        }
+
+        template <typename... Args_>
+        void send_dynamic(uint64_t file_id, uint64_t line_id, const Args_ &... args)
+        {
+            //发送动态数据
+            log_line *line = (log_line *)buffer.get();
+            line->type = log_type::DYNAMIC;
+
+            log_arg::dynamic_data *dynamic_data = (log_arg::dynamic_data *)line->data;
+            dynamic_data->file_id = file_id;
+            dynamic_data->line_id = line_id;
+
+            serialization::binary binary(dynamic_data->data);
+
+            binary.pack(args...);
+
+            dynamic_data->data_size = binary.get_write_size();
+            line->size = sizeof(*dynamic_data) + dynamic_data->data_size;
+
+            (**pipe_it_).write(reinterpret_cast<char *>(line), sizeof(*line) + line->size);
+        }
+    };
+
+    template <size_t PIPE_SIZE_ = 65536, size_t BUUFER_SIZE_ = 4096>
+    class log_service : public detail::log_base
+    {
+    private:
+        using pipe_t = parallelism::pipe<char>;
+        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, boost::interprocess::managed_shared_memory::segment_manager>>;
+
+        std::string shm_name_;
+
+        std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
+        list_pipe_t *list_pipe_;
+        list_pipe_t::iterator pipe_it_;
+
+        boost::interprocess::interprocess_mutex *mutex_;
+
+        std::atomic<uint64_t> *file_id;
+
+        std::atomic<uint64_t> *line_id;
+
+        std::unique_ptr<char[]> buffer;
+
+        fmt::dynamic_format_arg_store<fmt::format_context> fmt_args_;
+
+        std::unordered_map<uint64_t, std::fstream> file_map_;
+        std::unordered_map<uint64_t, std::string> fmt_map_;
+
+        void open(const log_arg::open &arg)
+        {
+            file_map_[arg.file_id].open(arg.file_name, std::ios::app);
+        }
+
+        void close(const log_arg::close &arg)
+        {
+            file_map_.erase(arg.file_id);
+        }
+
+        void static_data(const log_arg::static_data &arg)
+        {
+            fmt_map_[arg.line_id] = arg.format;
+        }
+
+        void dynamic_data(log_arg::dynamic_data &arg)
+        {
+            serialization::binary buf(arg.data);
+
+            auto push = [&](auto tmp) {
+                buf >> tmp;
+                fmt_args_.push_back(tmp);
+            };
+
+            while (buf.get_read_size() < arg.data_size)
+            {
+                switch (buf.get_type_id())
                 {
-                case 1:
-                    format % *(int8_t *)&buffer[i];
-                    i += sizeof(int8_t);
+                case type_id_v<int8_t>:
+                    push(int8_t());
                     break;
-                case 2:
-                    format % *(uint8_t *)&buffer[i];
-                    i += sizeof(uint8_t);
+                case type_id_v<uint8_t>:
+                    push(uint8_t());
                     break;
-                case 3:
-                    format % *(int16_t *)&buffer[i];
-                    i += sizeof(int16_t);
+                case type_id_v<int16_t>:
+                    push(int16_t());
                     break;
-                case 4:
-                    format % *(uint16_t *)&buffer[i];
-                    i += sizeof(uint16_t);
+                case type_id_v<uint16_t>:
+                    push(uint16_t());
                     break;
-
-                case 5:
-                    format % *(int32_t *)&buffer[i];
-                    i += sizeof(int32_t);
+                case type_id_v<int32_t>:
+                    push(int32_t());
                     break;
-                case 6:
-                    format % *(uint32_t *)&buffer[i];
-                    i += sizeof(uint32_t);
+                case type_id_v<uint32_t>:
+                    push(uint32_t());
                     break;
-                case 7:
-                    format % *(int64_t *)&buffer[i];
-                    i += sizeof(int64_t);
+                case type_id_v<int64_t>:
+                    push(int64_t());
                     break;
-                case 8:
-                    format % *(uint64_t *)&buffer[i];
-                    i += sizeof(uint64_t);
+                case type_id_v<uint64_t>:
+                    push(uint64_t());
                     break;
-                case 9:
-                    format % *(float *)&buffer[i];
-                    i += sizeof(float);
+                case type_id_v<float>:
+                    push(float());
                     break;
-                case 10:
-                    format % *(double *)&buffer[i];
-                    i += sizeof(double);
+                case type_id_v<double>:
+                    push(double());
                     break;
-                case 11:
-                    format % *(long double *)&buffer[i];
-                    i += sizeof(long double);
+                case type_id_v<long double>:
+                {
+                    long double tmp;
+                    buf >> tmp;
+                    fmt_args_.push_back(tmp);
                     break;
-
-                case 12:
-                    format % &buffer[i];
-                    i += strlen(&buffer[i]) + 1;
+                }
+                case type_id_v<std::string>:
+                    push(std::string());
                     break;
-
-                case 13:
-                    format % time_to_string(*(std::chrono::nanoseconds *)&buffer[i]);
-                    i += sizeof(std::chrono::nanoseconds);
+                case type_id<std::chrono::nanoseconds>::value:
+                {
+                    std::chrono::nanoseconds tmp;
+                    buf >> tmp;
+                    fmt_args_.push_back(std::to_string(tmp));
                     break;
-
+                }
                 default:
                     break;
                 }
             }
 
-            file << format;
+            file_map_[arg.file_id] << fmt::vformat(fmt_map_[arg.line_id], fmt_args_);
+
+            std::cout << fmt::vformat(fmt_map_[arg.line_id], fmt_args_) << std::endl;
+            file_map_[arg.file_id].flush();
+            fmt_args_.clear();
+        }
+
+    public:
+        log_service(const std::string &shm_name, size_t shm_size)
+        {
+            using namespace boost::interprocess;
+            boost::interprocess::shared_memory_object::remove(shm_name.c_str());
+            shared_memory_ = std::make_unique<interprocess::managed_shared_memory>(create_only, shm_name.c_str(), shm_size);
+
+            list_pipe_ = shared_memory_->construct<list_pipe_t>("list_pipe")(list_pipe_t::allocator_type(shared_memory_->get_segment_manager()));
+            mutex_ = shared_memory_->construct<boost::interprocess::interprocess_mutex>("mutex")();
+            file_id = shared_memory_->construct<std::atomic<uint64_t>>("file_id")();
+            line_id = shared_memory_->construct<std::atomic<uint64_t>>("line_id")();
+        }
+
+        void run(std::chrono::milliseconds ms)
+        {
+            auto buffer = std::unique_ptr<char[]>(new char[BUUFER_SIZE_]);
+            log_line *line = (log_line *)buffer.get();
+
+            while (1)
+            {
+                mutex_->lock();
+
+                for (auto &it : *list_pipe_)
+                {
+                    if ((*it).read(buffer.get(), sizeof(*line)))
+                    {
+                        (*it).read(line->data, line->size);
+                        switch (line->type)
+                        {
+                        case log_type::OPEN:
+                            open(*(log_arg::open *)line->data);
+                            break;
+                        case log_type::STATIC:
+                            static_data(*(log_arg::static_data *)line->data);
+                            break;
+                        case log_type::DYNAMIC:
+                            dynamic_data(*(log_arg::dynamic_data *)line->data);
+                            break;
+                        case log_type::CLOSE:
+                            close(*(log_arg::close *)line->data);
+                            break;
+                        }
+                    }
+                }
+
+                mutex_->unlock();
+
+                std::this_thread::sleep_for(ms);
+            }
         }
     };
+} // namespace mio
 
-} // namespace libcpp
+inline thread_local mio::log_client __LOG("log.shm");
+
+#define LOG(file, format, ...)                                 \
+    do                                                         \
+    {                                                          \
+        static uint64_t line_id = __LOG.send_static((format)); \
+        __LOG.send_dynamic((file), line_id, ##__VA_ARGS__);    \
+    } while (0)
