@@ -3,156 +3,121 @@
 #pragma once
 
 #include <stdint.h>
-#include <assert.h>
-#include <array>
-#include <string>
 #include <string.h>
+#include <string>
 #include <string_view>
 #include <type_traits>
-#include <functional>
-#include <algorithm>
 
-#include "mio/tool/metaprogramming.hpp"
-#include "mio/error/assertion.hpp"
+#include "mio/type_traits.hpp"
 
-namespace serialization
+namespace mio
 {
-    template <bool TYPE_SAFE>
-    class Binary
+    namespace serialization
     {
-    private:
-        char *data;
-
-        uint64_t read_size;
-        uint64_t write_size;
-
-    public:
-        Binary(void *buf) : data((char *)buf), read_size(0), write_size(0)
+        class binary
         {
-        }
+        private:
+            char *data;
+            uint64_t read_size = 0;
+            uint64_t write_size = 0;
 
-        template <typename T>
-        Binary &operator>>(T &input)
-        {
-            using namespace tool;
-            //如果需要保证类型安全
-            if constexpr (TYPE_SAFE)
+            template <typename T_>
+            constexpr size_t get_arg_size(const T_ &arg)
             {
-                static_assert(type_id<T>::value, "Type not supported");
-                assertion(data[read_size] == type_id<T>::value, "Type not supported");
-                read_size++;
+                if constexpr (is_string_v<T_>)
+                    return std::string_view(arg).length() + 1;
+                else
+                    return sizeof(T_);
             }
 
-            if constexpr (is_string<T>::value)
+            template <typename... Args_>
+            constexpr size_t get_args_size(const Args_ &... args)
             {
-                std::string_view str = std::string_view(&data[read_size]);
+                return (get_arg_size(args) + ...);
+            }
 
-                if constexpr (std::is_pointer<T>::value)
+        public:
+            binary(void *buf) : data((char *)buf)
+            {
+            }
+
+            template <typename T_>
+            binary &operator>>(T_ &input)
+            {
+                static_assert(type_id_v<T_>, "Type not supported");
+
+                if (data[read_size] != type_id_v<T_>)
+                    throw std::runtime_error("Type not supported");
+
+                read_size++;
+
+                if constexpr (is_string_v<T_>)
                 {
-                    memcpy(input, str.data(), str.length() + 1);
+                    std::string_view str = std::string_view(&data[read_size]);
+
+                    if constexpr (std::is_pointer_v<T_>)
+                    {
+                        memcpy(input, str.data(), str.length() + 1);
+                    }
+                    else
+                    {
+                        input = str;
+                    }
+
+                    read_size += str.length() + 1;
                 }
                 else
                 {
-                    input = str;
+                    T_ *d = (T_ *)&data[read_size];
+                    read_size += sizeof(T_);
+                    input = *d;
                 }
 
-                read_size += str.length() + 1;
-            }
-            else
-            {
-                T *d = (T *)&data[read_size];
-                read_size += sizeof(T);
-                input = *d;
+                return *this;
             }
 
-            return *this;
-        }
-
-        template <typename T>
-        Binary &operator<<(const T &output)
-        {
-            using namespace tool;
-            //如果需要保证类型安全
-            if constexpr (TYPE_SAFE)
+            template <typename T_>
+            binary &operator<<(const T_ &output)
             {
-                static_assert(type_id<T>::value, "Type not supported");
-                data[write_size] = type_id<T>::value;
+                static_assert(type_id_v<T_>, "Type not supported");
+                data[write_size] = type_id_v<T_>;
                 write_size++;
+
+                if constexpr (is_string_v<T_>)
+                {
+                    std::string_view str(output);
+                    memcpy(&data[write_size], str.data(), str.length() + 1);
+                    write_size += str.length() + 1;
+                }
+                else
+                {
+                    memcpy(&data[write_size], &output, sizeof(output));
+                    write_size += sizeof(T_);
+                }
+
+                return *this;
             }
 
-            if constexpr (is_string<T>::value)
+            template <typename... Args_>
+            void pack(const Args_ &... args)
             {
-                std::string_view str(output);
-                memcpy(&data[write_size], str.data(), str.length() + 1);
-                write_size += str.length() + 1;
+                (*this << ... << args);
             }
-            else
+
+            uint8_t get_type_id()
             {
-                memcpy(&data[write_size], &output, sizeof(output));
-                write_size += sizeof(T);
+                return data[read_size];
             }
 
-            return *this;
-        }
+            uint64_t get_read_size()
+            {
+                return read_size;
+            }
 
-        template <typename... Args>
-        void pack(const Args &... args)
-        {
-            (*this << ... << args); 
-        }
-
-        template <size_t SIZE, typename... Args>
-        static constexpr auto compiletime_pack(const Args &... args)
-        {
-            using namespace tool;
-            std::array<char, SIZE + (TYPE_SAFE ? sizeof...(Args) : 0)> buf{};
-            char *p = buf.data();
-
-            auto cpy = [&](auto arg) {
-                if constexpr (TYPE_SAFE)
-                {
-                    static_assert(type_id<decltype(arg)>::value, "Type not supported");
-                    *p = type_id<decltype(arg)>::value;
-                    p++;
-                }
-
-                if constexpr (is_string<decltype(arg)>::value)
-                {
-                    for (size_t i = 0; i < get_size(arg); i++)
-                    {
-                        p[i] = arg[i];
-                    }
-                }
-                else if constexpr (std::is_integral<decltype(arg)>::value)
-                {
-                    for (size_t i = 0; i < get_size(arg); i++)
-                    {
-                        p[i] = arg & 0xff;
-                        arg >>= 8;
-                    }
-                }
-
-                p += get_size(arg);
-            };
-
-            (cpy(args), ...);
-
-            return buf;
-        }
-
-        uint8_t get_type_id()
-        {
-            return data[read_size];
-        }
-
-        uint64_t get_read_size()
-        {
-            return read_size;
-        }
-
-        uint64_t get_write_size()
-        {
-            return write_size;
-        }
-    };
-} // namespace serialization
+            uint64_t get_write_size()
+            {
+                return write_size;
+            }
+        };
+    } // namespace serialization
+} // namespace mio
