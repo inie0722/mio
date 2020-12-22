@@ -19,7 +19,7 @@ namespace mio
     };
 
     template <typename T_>
-    inline bool is_string_v = is_string<T_>::value;
+    inline constexpr bool is_string_v = is_string<T_>::value;
 
     template <typename... Args>
     class type_tuple
@@ -85,5 +85,5 @@ namespace mio
     };
 
     template <typename T_>
-    inline uint8_t type_id_v = type_id<T_>::value;
+    inline constexpr uint8_t type_id_v = type_id<T_>::value;
 } // namespace mio
