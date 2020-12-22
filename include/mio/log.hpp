@@ -335,8 +335,9 @@ namespace mio
 
                 for (auto &it : *list_pipe_)
                 {
-                    if ((*it).read(buffer.get(), sizeof(*line)))
+                    if ((*it).size() > sizeof(*line))
                     {
+                        (*it).read(buffer.get(), sizeof(*line));
                         (*it).read(line->data, line->size);
                         switch (line->type)
                         {

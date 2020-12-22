@@ -1,25 +1,12 @@
-#include "log.hpp"
+#include "mio/log.hpp"
+#include <thread>
+#include <chrono>
 
-#include <iostream>
+using namespace std;
 
-#include <boost/format.hpp>
-
-#define LOG libcpp::log<boost::format>::get_log()
-
-int main(void)
+int main()
 {
-    std::thread write([](){
-        LOG.run(std::chrono::milliseconds(10));
-    });
-    using namespace std::chrono;
-
-    for (size_t i = 0; i < 1000; i++)
-    {
-        auto time = nanoseconds(duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count());
-        LOG("test.txt", "%1% 123456789 %2% %3%\n", time, " test", i);
-    }
-    
-    std::cout << "complete" << std::endl;
-    write.join();
+    mio::log_service log("log.shm", 65536 * 70);
+    log.run(std::chrono::milliseconds(0));
     return 0;
 }
