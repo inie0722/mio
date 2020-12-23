@@ -76,7 +76,7 @@ namespace mio
     {
     private:
         using pipe_t = parallelism::pipe<char, PIPE_SIZE_>;
-        using list_pipe_t = boost::interprocess::list<boost::interprocess::unique_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
 
         std::string shm_name_;
         std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
@@ -107,7 +107,7 @@ namespace mio
                 line_id = shared_memory_->find<std::atomic<uint64_t>>("line_id").first;
 
                 mutex_->lock();
-                list_pipe_->push_front(boost::interprocess::unique_ptr<pipe_t>(shared_memory_->construct<pipe_t>(anonymous_instance)()));
+                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)());
                 pipe_it_ = list_pipe_->begin();
                 mutex_->unlock();
 
@@ -126,7 +126,9 @@ namespace mio
                 std::this_thread::yield();
             }
 
+
             mutex_->lock();
+            shared_memory_->destroy(*pipe_it_);
             list_pipe_->erase(pipe_it_);
             mutex_->unlock();
         }
@@ -205,7 +207,7 @@ namespace mio
     {
     private:
         using pipe_t = parallelism::pipe<char, PIPE_SIZE_>;
-        using list_pipe_t = boost::interprocess::list<boost::interprocess::unique_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
 
         std::string shm_name_;
 
