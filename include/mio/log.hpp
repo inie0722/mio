@@ -76,7 +76,7 @@ namespace mio
     {
     private:
         using pipe_t = parallelism::pipe<char>;
-        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, boost::interprocess::managed_shared_memory::segment_manager>>;
+        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
 
         std::string shm_name_;
         std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
@@ -118,7 +118,6 @@ namespace mio
     public:
         log_client(const std::string &shm_name) : shm_name_(shm_name)
         {
-            constructor();
         }
         ~log_client()
         {
@@ -203,7 +202,7 @@ namespace mio
     {
     private:
         using pipe_t = parallelism::pipe<char>;
-        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, boost::interprocess::managed_shared_memory::segment_manager>>;
+        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
 
         std::string shm_name_;
 
@@ -296,7 +295,7 @@ namespace mio
                 {
                     std::chrono::nanoseconds tmp;
                     buf >> tmp;
-                    fmt_args_.push_back(mio::to_string(tmp));
+                    fmt_args_.push_back(std::to_string(tmp));
                     break;
                 }
                 default:
@@ -316,7 +315,7 @@ namespace mio
         {
             using namespace boost::interprocess;
             boost::interprocess::shared_memory_object::remove(shm_name.c_str());
-            shared_memory_ = std::make_unique<interprocess::managed_shared_memory>(create_only, shm_name.c_str(), shm_size);
+            shared_memory_ = std::make_unique<mio::interprocess::managed_shared_memory>(boost::interprocess::create_only, shm_name.c_str(), shm_size);
 
             list_pipe_ = shared_memory_->construct<list_pipe_t>("list_pipe")(list_pipe_t::allocator_type(shared_memory_->get_segment_manager()));
             mutex_ = shared_memory_->construct<boost::interprocess::interprocess_mutex>("mutex")();
@@ -364,12 +363,3 @@ namespace mio
         }
     };
 } // namespace mio
-
-inline thread_local mio::log_client __LOG("log.shm");
-
-#define LOG(file, format, ...)                                 \
-    do                                                         \
-    {                                                          \
-        static uint64_t line_id = __LOG.send_static((format)); \
-        __LOG.send_dynamic((file), line_id, ##__VA_ARGS__);    \
-    } while (0)
