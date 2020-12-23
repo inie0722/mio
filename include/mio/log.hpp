@@ -75,13 +75,13 @@ namespace mio
     class log_client : public detail::log_base
     {
     private:
-        using pipe_t = parallelism::pipe<char>;
-        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
+        using pipe_t = parallelism::pipe<char, PIPE_SIZE_>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::unique_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
 
         std::string shm_name_;
         std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
         list_pipe_t *list_pipe_;
-        list_pipe_t::iterator pipe_it_;
+        typename list_pipe_t::iterator pipe_it_;
 
         boost::interprocess::interprocess_mutex *mutex_;
 
@@ -107,7 +107,7 @@ namespace mio
                 line_id = shared_memory_->find<std::atomic<uint64_t>>("line_id").first;
 
                 mutex_->lock();
-                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)());
+                list_pipe_->push_front(boost::interprocess::unique_ptr<pipe_t>(shared_memory_->construct<pipe_t>(anonymous_instance)()));
                 pipe_it_ = list_pipe_->begin();
                 mutex_->unlock();
 
@@ -149,6 +149,7 @@ namespace mio
 
         void close_file(uint64_t file_id)
         {
+            constructor();
             //关闭文件操作
             log_line *line = (log_line *)buffer.get();
             line->type = log_type::CLOSE;
@@ -162,6 +163,7 @@ namespace mio
 
         uint64_t send_static(const std::string &format)
         {
+            constructor();
             //发送静态数据
             log_line *line = (log_line *)buffer.get();
             line->type = log_type::STATIC;
@@ -178,6 +180,7 @@ namespace mio
         template <typename... Args_>
         void send_dynamic(uint64_t file_id, uint64_t line_id, const Args_ &... args)
         {
+            constructor();
             //发送动态数据
             log_line *line = (log_line *)buffer.get();
             line->type = log_type::DYNAMIC;
@@ -201,14 +204,14 @@ namespace mio
     class log_service : public detail::log_base
     {
     private:
-        using pipe_t = parallelism::pipe<char>;
-        using list_pipe_t = boost::interprocess::list<interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
+        using pipe_t = parallelism::pipe<char, PIPE_SIZE_>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::unique_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
 
         std::string shm_name_;
 
         std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
         list_pipe_t *list_pipe_;
-        list_pipe_t::iterator pipe_it_;
+        typename list_pipe_t::iterator pipe_it_;
 
         boost::interprocess::interprocess_mutex *mutex_;
 
@@ -295,7 +298,7 @@ namespace mio
                 {
                     std::chrono::nanoseconds tmp;
                     buf >> tmp;
-                    fmt_args_.push_back(std::to_string(tmp));
+                    fmt_args_.push_back(mio::to_string(tmp));
                     break;
                 }
                 default:
@@ -317,7 +320,7 @@ namespace mio
             boost::interprocess::shared_memory_object::remove(shm_name.c_str());
             shared_memory_ = std::make_unique<mio::interprocess::managed_shared_memory>(boost::interprocess::create_only, shm_name.c_str(), shm_size);
 
-            list_pipe_ = shared_memory_->construct<list_pipe_t>("list_pipe")(list_pipe_t::allocator_type(shared_memory_->get_segment_manager()));
+            list_pipe_ = shared_memory_->construct<list_pipe_t>("list_pipe")(typename list_pipe_t::allocator_type(shared_memory_->get_segment_manager()));
             mutex_ = shared_memory_->construct<boost::interprocess::interprocess_mutex>("mutex")();
             file_id = shared_memory_->construct<std::atomic<uint64_t>>("file_id")();
             line_id = shared_memory_->construct<std::atomic<uint64_t>>("line_id")();
