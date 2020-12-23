@@ -296,7 +296,7 @@ namespace mio
                 {
                     std::chrono::nanoseconds tmp;
                     buf >> tmp;
-                    fmt_args_.push_back(std::to_string(tmp));
+                    fmt_args_.push_back(mio::to_string(tmp));
                     break;
                 }
                 default:

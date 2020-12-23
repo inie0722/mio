@@ -17,10 +17,7 @@ namespace mio
             return duration_cast<nanoseconds>(system_clock::now().time_since_epoch());
         }
     } // namespace chrono
-} // namespace mio
 
-namespace std
-{
     inline std::string to_string(std::chrono::nanoseconds tm)
     {
 
@@ -44,4 +41,4 @@ namespace std
         ss << buf;
         return ss.str();
     }
-} // namespace std
+} // namespace mio
