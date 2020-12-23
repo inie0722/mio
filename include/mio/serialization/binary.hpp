@@ -99,9 +99,9 @@ namespace mio
             }
 
             template <typename... Args_>
-            void pack(const Args_ &... args)
+            binary& pack(const Args_ &... args)
             {
-                (*this << ... << args);
+                return (*this << ... << args);
             }
 
             uint8_t get_type_id()
