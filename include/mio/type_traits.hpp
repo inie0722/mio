@@ -18,8 +18,21 @@ namespace mio
     {
     };
 
+    template <typename T_, typename = void>
+    struct is_container : std::false_type
+    {
+    };
+
+    template <typename T_>
+    struct is_container<T_, decltype((void)(std::declval<T_>().begin() != std::declval<T_>().end()))> : std::true_type
+    {
+    };
+
     template <typename T_>
     inline constexpr bool is_string_v = is_string<T_>::value;
+
+    template <typename T_>
+    inline constexpr bool is_container_v = is_container<T_>::value;
 
     template <typename... Args>
     class type_tuple
@@ -47,7 +60,9 @@ namespace mio
         constexpr uint8_t get_type_id()
         {
             using T = std::remove_cv_t<T_>;
-            if constexpr (std::is_same_v<T, char>)
+            if constexpr (std::is_same_v<T, void>)
+                return 0;
+            else if constexpr (std::is_same_v<T, char>)
                 return 1;
             else if constexpr (std::is_same_v<T, int8_t>)
                 return 2;
@@ -71,9 +86,9 @@ namespace mio
                 return 11;
             else if constexpr (std::is_same_v<T, long double>)
                 return 12;
-            else if constexpr (is_string_v<T>)
-                return 13;
             else if constexpr (std::is_same_v<T, std::chrono::nanoseconds>)
+                return 13;
+            else if constexpr (is_container_v<T> || std::is_array_v<T>)
                 return 14;
         }
     } // namespace detail
