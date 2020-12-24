@@ -101,4 +101,43 @@ namespace mio
 
     template <typename T_>
     inline constexpr uint8_t type_id_v = type_id<T_>::value;
+
+    template <typename T_>
+    struct remove_pointer
+    {
+        using type = std::remove_reference_t<decltype(*std::declval<T_>())>;
+    };
+
+    template <typename T_>
+    using remove_pointer_t = typename remove_pointer<T_>::type;
+
+    namespace detail
+    {
+        template <typename T_, bool>
+        struct remove_container_type
+        {
+        };
+
+        template <typename T_>
+        struct remove_container_type<T_, true>
+        {
+            using type = typename T_::value_type;
+        };
+
+        template <typename T_>
+        struct remove_container_type<T_, false>
+        {
+            using type = remove_pointer_t<T_>;
+        };
+    } // namespace detail
+
+    template <typename T_>
+    struct remove_container_type
+    {
+        using type = typename detail::remove_container_type<T_, is_container_v<T_>>::type;
+    };
+
+    template <typename T_>
+    using remove_container_t = typename remove_container_type<T_>::type;
+
 } // namespace mio
