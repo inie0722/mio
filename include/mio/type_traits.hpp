@@ -103,9 +103,9 @@ namespace mio
                 return 13;
             else if constexpr (is_container_v<T> || std::is_array_v<T>)
                 return 14;
-            else if constexpr (is_tuple_v<T>)
+            else if constexpr (is_tuple_v<T> || std::is_object_v<T>)
                 return 15;
-                }
+        }
     } // namespace detail
 
     template <typename T>
