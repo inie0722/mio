@@ -18,6 +18,9 @@ namespace mio
     {
     };
 
+    template <typename T_>
+    inline constexpr bool is_string_v = is_string<T_>::value;
+
     template <typename T_, typename = void>
     struct is_container : std::false_type
     {
@@ -29,10 +32,20 @@ namespace mio
     };
 
     template <typename T_>
-    inline constexpr bool is_string_v = is_string<T_>::value;
+    inline constexpr bool is_container_v = is_container<T_>::value;
+
+    template <typename T_, typename = void>
+    struct is_tuple : std::false_type
+    {
+    };
 
     template <typename T_>
-    inline constexpr bool is_container_v = is_container<T_>::value;
+    struct is_tuple<T_, decltype((void)std::get<0>(std::declval<T_>()))> : std::true_type
+    {
+    };
+
+    template <typename T_>
+    inline constexpr bool is_tuple_v = is_tuple<T_>::value;
 
     template <typename... Args>
     class type_tuple
@@ -90,7 +103,9 @@ namespace mio
                 return 13;
             else if constexpr (is_container_v<T> || std::is_array_v<T>)
                 return 14;
-        }
+            else if constexpr (is_tuple_v<T>)
+                return 15;
+                }
     } // namespace detail
 
     template <typename T>
@@ -139,5 +154,4 @@ namespace mio
 
     template <typename T_>
     using remove_container_t = typename remove_container_type<T_>::type;
-
 } // namespace mio
