@@ -83,6 +83,11 @@ namespace mio
                 return writable_limit > readable_limit ? writable_limit - readable_limit : 0;
             }
 
+            constexpr size_t max_size() const
+            {
+                return N_;
+            }
+
             bool empty() const
             {
                 return !this->size();

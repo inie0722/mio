@@ -35,10 +35,10 @@ namespace mio
                 return *this;
             }
 
-            operator T_()
+            operator T_() const
             {
                 bool index = !flag.load();
-                std::shared_lock lock(mutex[index]);
+                std::shared_lock lock(const_cast<std::shared_mutex&>(mutex[index]));
                 return data[index];
             }
         };
