@@ -368,3 +368,12 @@ namespace mio
         }
     };
 } // namespace mio
+
+inline thread_local mio::log_client __LOG("log.shm");
+
+#define LOG(file, format, ...)                                 \
+    do                                                         \
+    {                                                          \
+        static uint64_t line_id = __LOG.send_static((format)); \
+        __LOG.send_dynamic((file), line_id, ##__VA_ARGS__);    \
+    } while (0)
