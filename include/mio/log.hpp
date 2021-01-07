@@ -126,9 +126,8 @@ namespace mio
                 std::this_thread::yield();
             }
 
-
             mutex_->lock();
-            shared_memory_->destroy(*pipe_it_);
+            shared_memory_->destroy_ptr((*pipe_it_).get());
             list_pipe_->erase(pipe_it_);
             mutex_->unlock();
         }
@@ -368,12 +367,3 @@ namespace mio
         }
     };
 } // namespace mio
-
-inline thread_local mio::log_client __LOG("log.shm");
-
-#define LOG(file, format, ...)                                 \
-    do                                                         \
-    {                                                          \
-        static uint64_t line_id = __LOG.send_static((format)); \
-        __LOG.send_dynamic((file), line_id, ##__VA_ARGS__);    \
-    } while (0)

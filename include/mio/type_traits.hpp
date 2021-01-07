@@ -101,10 +101,8 @@ namespace mio
                 return 12;
             else if constexpr (std::is_same_v<T, std::chrono::nanoseconds>)
                 return 13;
-            else if constexpr (is_container_v<T> || std::is_array_v<T>)
+            else if constexpr (is_string_v<T>)
                 return 14;
-            else if constexpr (is_tuple_v<T> || std::is_object_v<T>)
-                return 15;
         }
     } // namespace detail
 
