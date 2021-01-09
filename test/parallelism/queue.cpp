@@ -9,7 +9,7 @@
 #include <stack>
 #include <mutex>
 
-constexpr size_t SIZE = 1000;
+constexpr size_t SIZE = 100000;
 
 constexpr size_t BUF_SIZE = 4096;
 

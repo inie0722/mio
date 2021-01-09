@@ -55,7 +55,7 @@ namespace mio
                     if (last->next.compare_exchange_weak(exp, n))
                     {
                         //将tail 指向新节点
-                        tail_.compare_exchange_weak(last, n);
+                        tail_.compare_exchange_strong(last, n);
                         return;
                     }
                 }
@@ -76,7 +76,7 @@ namespace mio
                     if (last->next.compare_exchange_weak(exp, n))
                     {
                         //将tail 指向新节点
-                        tail_.compare_exchange_weak(last, n);
+                        tail_.compare_exchange_strong(last, n);
                         return;
                     }
                 }
@@ -93,12 +93,17 @@ namespace mio
                     //如果队列中有元素
                     if (first != last)
                     {
+                        //n队列为空
+                        if (next == nullptr)
+                        {
+                            continue;
+                        }
+
+                        val = next->value;
                         if (head_.compare_exchange_weak(first, next))
                         {
                             //删除 first
                             allocator_.deallocate(first);
-                            //next 节点变为头节点
-                            val = std::move(next->value);
                             return;
                         }
                     }
