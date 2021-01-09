@@ -22,7 +22,7 @@ public:
     template <size_t DATA_SIZE_>
     void run_one()
     {
-        mio::parallelism::pipe<std::array<char, DATA_SIZE_>, BUF_SIZE> pipe;
+        mio::parallelism::pipe<std::array<char, DATA_SIZE_>> pipe(BUF_SIZE);
         size_t array[SIZE] = {0};
 
         std::chrono::nanoseconds write_diff;
