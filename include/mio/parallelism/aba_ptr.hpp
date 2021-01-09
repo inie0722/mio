@@ -137,7 +137,7 @@ namespace std
             uint16_t count = (expected.ptr_ & COUNT_MASK) + 1;
 
             uint64_t des = ((uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
-            return ptr_.compare_exchange_weak(expected.ptr_, des, failure);
+            return ptr_.compare_exchange_strong(expected.ptr_, des, failure);
         }
 
         aba_ptr fetch_add(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
