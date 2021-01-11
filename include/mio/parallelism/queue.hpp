@@ -49,15 +49,19 @@ namespace mio
                 while (1)
                 {
                     aba_ptr<node> last = tail_.load();
-                    aba_ptr<node> exp = nullptr;
+                    aba_ptr<node> exp = last->next;
 
                     //如果 last next 是 null 就代表是最后一个节点
-                    if (last->next.compare_exchange_weak(exp, n))
+                    if(exp != nullptr)
+                    {
+                        tail_.compare_exchange_strong(last, exp);
+                    }
+                    else if (last->next.compare_exchange_weak(exp, n))
                     {
                         //将tail 指向新节点
                         tail_.compare_exchange_strong(last, n);
                         return;
-                    }
+                    }                    
                 }
             }
 
@@ -70,15 +74,19 @@ namespace mio
                 while (1)
                 {
                     aba_ptr<node> last = tail_.load();
-                    aba_ptr<node> exp = nullptr;
+                    aba_ptr<node> exp = last->next;
 
                     //如果 last next 是 null 就代表是最后一个节点
-                    if (last->next.compare_exchange_weak(exp, n))
+                    if(exp != nullptr)
+                    {
+                        tail_.compare_exchange_strong(last, exp);
+                    }
+                    else if (last->next.compare_exchange_weak(exp, n))
                     {
                         //将tail 指向新节点
                         tail_.compare_exchange_strong(last, n);
                         return;
-                    }
+                    }  
                 }
             }
 
@@ -91,14 +99,23 @@ namespace mio
                     aba_ptr<node> next = first->next;
 
                     //如果队列中有元素
-                    if (first != last)
+                    if (first == last)
                     {
-                        //n队列为空
                         if (next == nullptr)
                         {
                             continue;
                         }
 
+                        tail_.compare_exchange_strong(last, next);
+                    }
+                    else
+                    {
+                        if (next == nullptr)
+                        {
+                            continue;
+                        }
+
+                        //n队列为空
                         val = next->value;
                         if (head_.compare_exchange_weak(first, next))
                         {
