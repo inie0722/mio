@@ -21,8 +21,8 @@ public:
     template <size_t DATA_SIZE_>
     void run_one()
     {
-        typedef mio::parallelism::ring_queue<std::array<char, DATA_SIZE_>, BUF_SIZE> ring_queue_t;
-        auto ring_queue_ptr = std::make_unique<ring_queue_t>();
+        typedef mio::parallelism::ring_queue<std::array<char, DATA_SIZE_>> ring_queue_t;
+        auto ring_queue_ptr = std::make_unique<ring_queue_t>(4096);
         ring_queue_t &ring_queue = *ring_queue_ptr;
         std::atomic<size_t> array[SIZE] = {0};
 
