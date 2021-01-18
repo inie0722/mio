@@ -71,12 +71,12 @@ namespace mio
         };
     } // namespace detail
 
-    template <size_t PIPE_SIZE_ = 65536, size_t BUUFER_SIZE_ = 4096>
+    template <size_t BUUFER_SIZE_ = 4096>
     class log_client : public detail::log_base
     {
     private:
-        using pipe_t = parallelism::pipe<char, PIPE_SIZE_>;
-        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
+        using pipe_t = parallelism::pipe<char, mio::interprocess::allocator<char>>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, mio::interprocess::allocator<interprocess::offset_ptr<pipe_t>>>;
 
         std::string shm_name_;
         std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
@@ -107,7 +107,7 @@ namespace mio
                 line_id = shared_memory_->find<std::atomic<uint64_t>>("line_id").first;
 
                 mutex_->lock();
-                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)());
+                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)(65536 , pipe_t::allocator_type(shared_memory_->get_segment_manager())));
                 pipe_it_ = list_pipe_->begin();
                 mutex_->unlock();
 
@@ -205,8 +205,8 @@ namespace mio
     class log_service : public detail::log_base
     {
     private:
-        using pipe_t = parallelism::pipe<char, PIPE_SIZE_>;
-        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, boost::interprocess::allocator<interprocess::offset_ptr<pipe_t>, mio::interprocess::managed_shared_memory::segment_manager>>;
+        using pipe_t = parallelism::pipe<char, mio::interprocess::allocator<char>>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, mio::interprocess::allocator<interprocess::offset_ptr<pipe_t>>>;
 
         std::string shm_name_;
 
@@ -308,8 +308,6 @@ namespace mio
             }
 
             file_map_[arg.file_id] << fmt::vformat(fmt_map_[arg.line_id], fmt_args_);
-
-            std::cout << fmt::vformat(fmt_map_[arg.line_id], fmt_args_) << std::endl;
             file_map_[arg.file_id].flush();
             fmt_args_.clear();
         }
