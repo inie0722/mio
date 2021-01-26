@@ -58,6 +58,12 @@ namespace mio
                 }
             }
 
+            ring_queue(size_type max_size, const Allocator& alloc)
+            :max_size_(max_size), buffer_(max_size, alloc), readable_flag_(max_size, alloc), writable_flag_(max_size, alloc), readable_limit_(0), writable_limit_(0)
+            {
+
+            }
+
             void push(const T &val, const wait::handler_t &handler = wait::yield)
             {
                 size_t index = this->writable_limit_.fetch_add(1);

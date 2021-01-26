@@ -50,6 +50,12 @@ namespace mio
                     this->data_ = allocator_traits::allocate(allocator_, max_size);
                 }
 
+                ring_buffer(size_type max_size, const Allocator &alloc)
+                    : max_size_(max_size), allocator_(alloc)
+                {
+                    this->data_ = allocator_traits::allocate(allocator_, max_size);
+                }
+
                 ~ring_buffer()
                 {
                     allocator_traits::deallocate(allocator_, this->data_, this->max_size());

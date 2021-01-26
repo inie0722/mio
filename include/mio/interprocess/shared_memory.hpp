@@ -43,6 +43,9 @@ namespace std
 
         using size_type = typename allocator_type::size_type;
 
+        template <typename T_>
+        using rebind_traits = allocator_traits<mio::interprocess::allocator<T_>>;
+
         inline static pointer allocate(allocator_type &alloc, size_type n)
         {
             return alloc.allocate(n);
