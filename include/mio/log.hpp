@@ -76,10 +76,10 @@ namespace mio
     {
     private:
         using pipe_t = parallelism::pipe<char, mio::interprocess::allocator<char>>;
-        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, mio::interprocess::allocator<interprocess::offset_ptr<pipe_t>>>;
+        using list_pipe_t = boost::interprocess::list<boost::interprocess::offset_ptr<pipe_t>, interprocess::allocator<interprocess::offset_ptr<pipe_t>>>;
 
         std::string shm_name_;
-        std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
+        std::unique_ptr<interprocess::managed_mapped_file> shared_memory_;
         list_pipe_t *list_pipe_;
         typename list_pipe_t::iterator pipe_it_;
 
@@ -99,7 +99,7 @@ namespace mio
             if (flag == true)
             {
                 buffer = std::unique_ptr<char[]>(new char[BUUFER_SIZE_]);
-                shared_memory_ = std::make_unique<interprocess::managed_shared_memory>(open_only, shm_name_.c_str());
+                shared_memory_ = std::make_unique<interprocess::managed_mapped_file>(open_only, shm_name_.c_str());
 
                 list_pipe_ = shared_memory_->find<list_pipe_t>("list_pipe").first;
                 mutex_ = shared_memory_->find<boost::interprocess::interprocess_mutex>("mutex").first;
@@ -107,7 +107,7 @@ namespace mio
                 line_id = shared_memory_->find<std::atomic<uint64_t>>("line_id").first;
 
                 mutex_->lock();
-                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)(65536 , pipe_t::allocator_type(shared_memory_->get_segment_manager())));
+                list_pipe_->push_front(shared_memory_->construct<pipe_t>(anonymous_instance)(65536, pipe_t::allocator_type(shared_memory_->get_segment_manager())));
                 pipe_it_ = list_pipe_->begin();
                 mutex_->unlock();
 
@@ -210,7 +210,7 @@ namespace mio
 
         std::string shm_name_;
 
-        std::unique_ptr<interprocess::managed_shared_memory> shared_memory_;
+        std::unique_ptr<interprocess::managed_mapped_file> shared_memory_;
         list_pipe_t *list_pipe_;
         typename list_pipe_t::iterator pipe_it_;
 
@@ -317,7 +317,7 @@ namespace mio
         {
             using namespace boost::interprocess;
             boost::interprocess::shared_memory_object::remove(shm_name.c_str());
-            shared_memory_ = std::make_unique<mio::interprocess::managed_shared_memory>(boost::interprocess::create_only, shm_name.c_str(), shm_size);
+            shared_memory_ = std::make_unique<mio::interprocess::managed_mapped_file>(boost::interprocess::create_only, shm_name.c_str(), shm_size);
 
             list_pipe_ = shared_memory_->construct<list_pipe_t>("list_pipe")(typename list_pipe_t::allocator_type(shared_memory_->get_segment_manager()));
             mutex_ = shared_memory_->construct<boost::interprocess::interprocess_mutex>("mutex")();
