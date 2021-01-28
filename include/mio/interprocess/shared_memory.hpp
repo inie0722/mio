@@ -34,8 +34,8 @@ namespace mio
 
         public:
             allocator()
+                : instance_(std_allocator_t())
             {
-                instance_ = std_allocator_t();
             }
 
             allocator(segment_manager_t *segment_mngr)
