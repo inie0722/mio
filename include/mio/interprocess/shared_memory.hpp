@@ -30,6 +30,22 @@ namespace mio
             using segment_manager_t = mio::interprocess::managed_shared_memory::segment_manager;
             using shared_memory_allocator_t = boost::interprocess::allocator<T, segment_manager_t>;
 
+        public:
+            using value_type = typename shared_memory_allocator_t::value_type;
+
+            using pointer = typename shared_memory_allocator_t::pointer;
+
+            using const_pointer = typename shared_memory_allocator_t::const_pointer;
+
+            using void_pointer = typename shared_memory_allocator_t::void_pointer;
+
+            using const_void_pointer = const typename shared_memory_allocator_t::void_pointer;
+
+            using difference_type = typename shared_memory_allocator_t::difference_type;
+
+            using size_type = typename shared_memory_allocator_t::size_type;
+
+        private:
             std::variant<std_allocator_t, shared_memory_allocator_t> instance_;
 
         public:
@@ -55,20 +71,6 @@ namespace mio
                     new (&instance_) std::variant<std_allocator_t, shared_memory_allocator_t>(std::get<typename allocator<U>::shared_memory_allocator_t>(other.instance_));
                 }
             }
-
-            using value_type = typename shared_memory_allocator_t::value_type;
-
-            using pointer = typename shared_memory_allocator_t::pointer;
-
-            using const_pointer = typename shared_memory_allocator_t::const_pointer;
-
-            using void_pointer = typename shared_memory_allocator_t::void_pointer;
-
-            using const_void_pointer = const typename shared_memory_allocator_t::void_pointer;
-
-            using difference_type = typename shared_memory_allocator_t::difference_type;
-
-            using size_type = typename shared_memory_allocator_t::size_type;
 
             pointer allocate(size_type n)
             {
