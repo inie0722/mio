@@ -316,7 +316,8 @@ namespace mio
         log_service(const std::string &shm_name, size_t shm_size)
         {
             using namespace boost::interprocess;
-            boost::interprocess::shared_memory_object::remove(shm_name.c_str());
+            boost::interprocess::file_mapping::remove(shm_name.c_str());
+
             shared_memory_ = std::make_unique<mio::interprocess::managed_mapped_file>(boost::interprocess::create_only, shm_name.c_str(), shm_size);
 
             list_pipe_ = shared_memory_->construct<list_pipe_t>("list_pipe")(typename list_pipe_t::allocator_type(shared_memory_->get_segment_manager()));

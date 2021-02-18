@@ -9,7 +9,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/fmt/include)
-
+include_directories(${CMAKE_SOURCE_DIR}/parallel-hashmap)
 
 add_definitions(-Wall)
 
