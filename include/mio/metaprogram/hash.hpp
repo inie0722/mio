@@ -15,6 +15,8 @@ namespace mio
 
             constexpr uint64_t hash_combine(uint64_t h, uint64_t k) const
             {
+                h += seed;
+
                 uint64_t m = 0xc6a4a7935bd1e995;
                 int r = 47;
 
