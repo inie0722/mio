@@ -8,6 +8,7 @@ namespace mio
 {
     namespace metaprogram
     {
+        template<typename T>
         class hash
         {
         private:
@@ -36,6 +37,11 @@ namespace mio
         public:
             constexpr hash() : seed(0){};
             constexpr hash(uint64_t seed) : seed(seed){};
+
+            constexpr uint64_t operator()(T k) const
+            {
+                return hash_combine(seed, k);
+            }
 
             constexpr uint64_t operator()(uint64_t k) const
             {
