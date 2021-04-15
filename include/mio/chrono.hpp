@@ -36,7 +36,7 @@ namespace mio
         ss << std::put_time(std::localtime(&t), "%F %T");
 
         char buf[128];
-        sprintf(buf, ".%03llu%03llu%03llu", ms, us, ns);
+        sprintf(buf, " %03llu:%03llu:%03llu", ms, us, ns);
 
         ss << buf;
         return ss.str();
