@@ -47,26 +47,6 @@ namespace mio
     template <typename T_>
     inline constexpr bool is_tuple_v = is_tuple<T_>::value;
 
-    template <typename... Args>
-    class type_tuple
-    {
-    private:
-        template <typename T_>
-        struct __tuple
-        {
-            using type = T_;
-        };
-
-        std::tuple<__tuple<Args>...> tuple;
-
-    public:
-        template <size_t I>
-        struct get
-        {
-            using type = typename std::remove_reference_t<decltype(std::get<I>(tuple))>::type;
-        };
-    };
-
     namespace detail
     {
         template <typename T_>
@@ -114,15 +94,6 @@ namespace mio
 
     template <typename T_>
     inline constexpr uint8_t type_id_v = type_id<T_>::value;
-
-    template <typename T_>
-    struct remove_pointer
-    {
-        using type = std::remove_reference_t<decltype(*std::declval<T_>())>;
-    };
-
-    template <typename T_>
-    using remove_pointer_t = typename remove_pointer<T_>::type;
 
     namespace detail
     {
