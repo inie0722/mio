@@ -7,14 +7,14 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_>
+        template <typename T>
         class queue
         {
         private:
             struct node
             {
                 std::atomic<aba_ptr<node>> next;
-                T_ value;
+                T data;
             };
 
             allocator<node> allocator_;
@@ -40,88 +40,64 @@ namespace mio
                 }
             }
 
-            void push(const T_ &val)
+            void push(const T &val)
             {
-                auto n = allocator_.allocate();
-                n->value = val;
+                aba_ptr<node> n = allocator_.allocate();
+                n->data = val;
                 n->next = nullptr;
 
                 while (1)
                 {
-                    aba_ptr<node> last = tail_.load();
-                    aba_ptr<node> exp = last->next;
+                    aba_ptr<node> tail = tail_.load();
+                    aba_ptr<node> next = tail->next.load();
+                    aba_ptr<node> tail2 = tail_.load();
 
-                    //如果 last next 是 null 就代表是最后一个节点
-                    if(exp != nullptr)
-                    {
-                        tail_.compare_exchange_strong(last, exp);
-                    }
-                    else if (last->next.compare_exchange_weak(exp, n))
-                    {
-                        //将tail 指向新节点
-                        tail_.compare_exchange_strong(last, n);
-                        return;
-                    }                    
-                }
-            }
-
-            void push(T_ &&val)
-            {
-                auto n = allocator_.allocate();
-                n->value = std::move(val);
-                n->next = nullptr;
-
-                while (1)
-                {
-                    aba_ptr<node> last = tail_.load();
-                    aba_ptr<node> exp = last->next;
-
-                    //如果 last next 是 null 就代表是最后一个节点
-                    if(exp != nullptr)
-                    {
-                        tail_.compare_exchange_strong(last, exp);
-                    }
-                    else if (last->next.compare_exchange_weak(exp, n))
-                    {
-                        //将tail 指向新节点
-                        tail_.compare_exchange_strong(last, n);
-                        return;
-                    }  
-                }
-            }
-
-            void pop(T_ &val)
-            {
-                while (1)
-                {
-                    aba_ptr<node> first = head_;
-                    aba_ptr<node> last = tail_;
-                    aba_ptr<node> next = first->next;
-
-                    //如果队列中有元素
-                    if (first == last)
+                    if (tail == tail2)
                     {
                         if (next == nullptr)
                         {
-                            continue;
+                            if (tail->next.compare_exchange_weak(next, n))
+                            {
+                                tail_.compare_exchange_strong(tail, n);
+                                return;
+                            }
                         }
-
-                        tail_.compare_exchange_strong(last, next);
+                        else
+                        {
+                            tail_.compare_exchange_strong(tail, next);
+                        }
                     }
-                    else
-                    {
-                        if (next == nullptr)
-                        {
-                            continue;
-                        }
+                }
+            }
 
-                        //n队列为空
-                        val = next->value;
-                        if (head_.compare_exchange_weak(first, next))
+            void pop(T &val)
+            {
+                while (1)
+                {
+                    aba_ptr<node> head = head_.load();
+                    aba_ptr<node> next = head->next.load();
+                    aba_ptr<node> tail = tail_.load();
+                    aba_ptr<node> head2 = head_.load();
+
+                    if (head == head2)
+                    {
+                        if (head.get() == tail.get())
                         {
-                            //删除 first
-                            allocator_.deallocate(first);
-                            return;
+                            if (next == nullptr)
+                                continue;
+                            tail_.compare_exchange_strong(tail, next);
+                        }
+                        else
+                        {
+                            if (next == nullptr)
+                                continue;
+
+                            val = next->data;
+                            if (head_.compare_exchange_weak(head, next))
+                            {
+                                allocator_.deallocate(head);
+                                return;
+                            }
                         }
                     }
                 }

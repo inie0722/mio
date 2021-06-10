@@ -97,6 +97,11 @@ namespace mio
             {
                 return aba_ptr<AIMS>(ptr_);
             }
+
+            operator bool()
+            {
+                return this->get();
+            }
         };
     } // namespace parallelism
 } // namespace mio
@@ -173,18 +178,14 @@ namespace std
 
         aba_ptr fetch_add(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
-
-            uint64_t des = ((uint64_t)count << 48) + (arg * sizeof(T) & POINTER_MASK);
+            uint64_t des = (1ll << 48) + (arg * sizeof(T) & POINTER_MASK);
 
             return aba_ptr(ptr_.fetch_add(des, failure));
         }
 
         aba_ptr fetch_sub(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
-
-            uint64_t des = ((uint64_t)count << 48) + (arg * sizeof(T) & POINTER_MASK);
+            uint64_t des = (1ull << 48) + (arg * sizeof(T) & POINTER_MASK);
             return aba_ptr(ptr_.fetch_sub(des, failure));
         }
     };
