@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include "mio/parallelism/aba_ptr.hpp"
+#include "mio/parallelism/utility.hpp"
 
 namespace mio
 {
@@ -25,7 +26,7 @@ namespace mio
                 char data[sizeof(T)];
             };
 
-            std::atomic<aba_ptr<node>> free_list_;
+            alignas(CACHE_LINE) std::atomic<aba_ptr<node>> free_list_;
 
         public:
             allocator()

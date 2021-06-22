@@ -21,14 +21,14 @@ namespace mio
 
             static constexpr uint64_t POINTER_MASK = ~COUNT_MASK;
 
+            uint64_t ptr_;
+
             aba_ptr(uint64_t ptr)
             {
                 ptr_ = ptr;
             }
 
         public:
-            uint64_t ptr_;
-
             aba_ptr() = default;
 
             aba_ptr(T *ptr)
@@ -40,8 +40,6 @@ namespace mio
             {
                 ptr_ = ptr.ptr_;
             }
-
-            ~aba_ptr() = default;
 
             aba_ptr &operator=(T *ptr)
             {
@@ -112,9 +110,10 @@ namespace std
     class atomic<mio::parallelism::aba_ptr<T>>
     {
     public:
-        using aba_ptr = mio::parallelism::aba_ptr<T>;
+        using value_type = mio::parallelism::aba_ptr<T>;
 
     private:
+        using aba_ptr = mio::parallelism::aba_ptr<T>;
         static constexpr uint64_t COUNT_MASK = aba_ptr::COUNT_MASK;
         static constexpr uint64_t POINTER_MASK = aba_ptr::POINTER_MASK;
         std::atomic<uint64_t> ptr_;
@@ -178,7 +177,7 @@ namespace std
 
         aba_ptr fetch_add(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            uint64_t des = (1ll << 48) + (arg * sizeof(T) & POINTER_MASK);
+            uint64_t des = (1ull << 48) + (arg * sizeof(T) & POINTER_MASK);
 
             return aba_ptr(ptr_.fetch_add(des, failure));
         }
