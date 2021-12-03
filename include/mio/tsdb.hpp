@@ -6,6 +6,7 @@
 #include <fstream>
 #include <memory>
 #include <optional>
+#include <filesystem>
 
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -131,18 +132,9 @@ namespace mio
                 fbuf.sputc(0);
             }
 
-            //设置文件大小
-            void file_resize(size_t size)
-            {
-                std::filebuf fbuf;
-                fbuf.open(mmap_name_, std::ios::in | std::ios::out | std::ios::binary);
-                fbuf.pubseekoff(size - 1, std::ios::beg);
-                fbuf.sputc(0);
-            }
-
             void recapacity()
             {
-                file_resize(sizeof(header) + header_->capacity * 2 * sizeof(row_type));
+                std::filesystem::resize_file(mmap_name_, sizeof(header) + header_->capacity * 2 * sizeof(row_type));
                 header_->capacity = header_->capacity * 2;
             }
 
@@ -221,7 +213,7 @@ namespace mio
                 file_mapp_ = std::make_unique<boost::interprocess::file_mapping>(mmap_name_.c_str(), read_write);
                 region_ = std::make_unique<boost::interprocess::mapped_region>(*file_mapp_, read_write);
                 header_ = new (region_->get_address()) header;
-                row_ = (row_type *)((char *)region_->get_address() + sizeof(header));
+                row_ = reinterpret_cast<row_type *>((char *)region_->get_address() + sizeof(header));
 
                 header_->size = 0;
                 header_->capacity = capacity;
@@ -263,19 +255,25 @@ namespace mio
                 return const_cast<table *>(this)->do_read(index);
             }
 
-            size_t get_size() const
+            size_t size() const
             {
                 return header_->size;
             }
 
-            size_t get_capacity() const
+            size_t capacity() const
             {
                 return header_->capacity;
             }
 
-            size_t get_ref_cout() const
+            size_t ref_cout() const
             {
                 return header_->ref_cout;
+            }
+
+            void shrink_to_fit()
+            {
+                std::filesystem::resize_file(mmap_name_, sizeof(header) + header_->size * sizeof(row_type));
+                header_->capacity = header_->size;
             }
         };
     }
