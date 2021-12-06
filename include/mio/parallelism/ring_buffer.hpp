@@ -13,11 +13,11 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t N_>
-        class ring_buffer : public detail::ring_buffer<T_, Container_>
+        template <typename T, size_t N>
+        class ring_buffer : public detail::ring_buffer<T, Container_>
         {
         private:
-            detail::ring_buffer<T_, N_> c;
+            detail::ring_buffer<T, N> c;
             //可写界限
             alignas(CACHE_LINE) std::atomic<size_t> writable_limit_ = 0;
 
@@ -48,26 +48,26 @@ namespace mio
                 return *this;
             }
 
-            void push(const T_ &val)
+            void push(const T &val)
             {
                 size_t index = this->writable_limit_;
                 c.[index] = val;
                 ++this->writable_limit_;
             }
 
-            void push(T_ &&val)
+            void push(T &&val)
             {
                 size_t index = this->writable_limit_;
                 c.[index] = std::move(val);
                 ++this->writable_limit_;
             }
 
-            T_ &operator[](size_t index)
+            T &operator[](size_t index)
             {
                 return this->c[writable_limit_ - 1 - index];
             }
 
-            const T_ &operator[](size_t index) const
+            const T &operator[](size_t index) const
             {
                 return this->c[writable_limit_ - 1 - index];
             }

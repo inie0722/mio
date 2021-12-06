@@ -7,14 +7,14 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_>
+        template <typename T>
         class stack
         {
         private:
             struct node
             {
                 std::atomic<aba_ptr<node>> next;
-                T_ value;
+                T value;
             };
 
             allocator<node> allocator_;
@@ -35,7 +35,7 @@ namespace mio
                 }
             }
 
-            void push(const T_ &val)
+            void push(const T &val)
             {
                 aba_ptr<node> n = allocator_.allocate();
                 n->value = val;
@@ -49,7 +49,7 @@ namespace mio
                 }
             }
 
-            void pop(T_ &val)
+            void pop(T &val)
             {
                 aba_ptr<node> exp = top_;
                 aba_ptr<node> ret = exp;
