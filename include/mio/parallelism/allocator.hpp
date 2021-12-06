@@ -4,78 +4,80 @@
 #include <type_traits>
 
 #include "mio/parallelism/aba_ptr.hpp"
+#include "mio/parallelism/utility.hpp"
 
 namespace mio
 {
     namespace parallelism
     {
-        template <typename T_>
+        template <typename T>
         class allocator
         {
         public:
-            using value_type = T_;
+            using value_type = T;
             using size_type = size_t;
             using difference_type = ptrdiff_t;
             using propagate_on_container_move_assignment = std::true_type;
 
         private:
-            union alignas(alignof(std::atomic<aba_ptr<void>>) > alignof(T_) ? alignof(std::atomic<aba_ptr<void>>) : alignof(T_)) node
+            union alignas(alignof(std::atomic<aba_ptr<void>>) > alignof(T) ? alignof(std::atomic<aba_ptr<void>>) : alignof(T)) node
             {
                 std::atomic<aba_ptr<node>> next;
-                char data[sizeof(T_)];
+                char data[sizeof(T)];
             };
 
-            std::atomic<aba_ptr<node>> free_list;
+            alignas(CACHE_LINE) std::atomic<aba_ptr<node>> free_list_;
 
         public:
             allocator()
             {
-                free_list = nullptr;
+                free_list_ = nullptr;
             }
 
             ~allocator()
             {
-                while (free_list.load())
+                while (free_list_.load())
                 {
-                    aba_ptr<node> next = free_list.load()->next;
+                    aba_ptr<node> next = free_list_.load()->next;
 
-                    delete free_list.load();
+                    delete free_list_.load().get();
 
-                    free_list = next;
+                    free_list_ = next;
                 }
             }
 
-            aba_ptr<T_> allocate()
+            aba_ptr<T> allocate()
             {
-                aba_ptr<node> exp = free_list;
-                aba_ptr<node> ret = exp;
+                aba_ptr<node> exp = free_list_.load();
 
-                while (!exp || !free_list.compare_exchange_weak(exp, exp->next))
+                while (1)
                 {
-                    if (exp == nullptr)
+                    if (!exp)
                     {
-                        ret = new node;
-                        return static_cast<aba_ptr<T_>>(ret);
+                        return new T;
                     }
 
-                    ret = exp;
+                    aba_ptr<node> next = exp->next;
+                    if (free_list_.compare_exchange_weak(exp, next))
+                    {
+                        return static_cast<aba_ptr<T>>(exp);
+                    }
                 }
-
-                return static_cast<aba_ptr<T_>>(ret);
             }
 
-            void deallocate(aba_ptr<T_> p)
+            void deallocate(aba_ptr<T> p)
             {
                 aba_ptr<node> n = static_cast<aba_ptr<node>>(p);
-                aba_ptr<node> exp = free_list;
 
-                n->next = exp;
-                while (!free_list.compare_exchange_weak(exp, n))
+                while (1)
                 {
-                    n->next = exp;
+                    aba_ptr<node> exp = free_list_;
+                    n->next = free_list_.load();
+
+                    if (free_list_.compare_exchange_weak(exp, n))
+                        return;
                 }
             }
         };
     } // namespace parallelism
 } // namespace mio
-

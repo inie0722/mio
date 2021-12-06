@@ -8,11 +8,11 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_>
+        template <typename T>
         class aba_ptr
         {
         private:
-            friend class std::atomic<aba_ptr<T_>>;
+            friend class std::atomic<aba_ptr<T>>;
 
             template <typename>
             friend class aba_ptr;
@@ -31,14 +31,17 @@ namespace mio
         public:
             aba_ptr() = default;
 
-            aba_ptr(T_ *ptr)
+            aba_ptr(T *ptr)
             {
                 *this = ptr;
             }
 
-            ~aba_ptr() = default;
+            aba_ptr(const aba_ptr &ptr)
+            {
+                ptr_ = ptr.ptr_;
+            }
 
-            aba_ptr &operator=(T_ *ptr)
+            aba_ptr &operator=(T *ptr)
             {
                 ptr_ &= COUNT_MASK;
                 ptr_ += (uint64_t)ptr;
@@ -46,30 +49,56 @@ namespace mio
                 return *this;
             }
 
-            T_ *get()
+            aba_ptr &operator=(const aba_ptr &ptr)
             {
-                return reinterpret_cast<T_ *>(ptr_ & POINTER_MASK);
+                ptr_ = ptr.ptr_;
+                return *this;
             }
 
-            T_ &operator*()
+            T *get() const
+            {
+                return reinterpret_cast<T *>(ptr_ & POINTER_MASK);
+            }
+
+            T &operator*() const
             {
                 return *get();
             }
 
-            T_ *operator->()
+            T *operator->() const
             {
                 return get();
             }
 
-            operator T_ *()
+            bool operator==(const aba_ptr &ptr) const
             {
-                return get();
+                return this->ptr_ == ptr.ptr_;
+            }
+
+            bool operator!=(const aba_ptr &ptr) const
+            {
+                return this->ptr_ != ptr.ptr_;
+            }
+
+            bool operator!=(std::nullptr_t) const
+            {
+                return this->get() != nullptr;
+            }
+
+            bool operator==(std::nullptr_t) const
+            {
+                return this->get() == nullptr;
             }
 
             template <typename AIMS>
-            explicit operator aba_ptr<AIMS>()
+            explicit operator aba_ptr<AIMS>() const
             {
                 return aba_ptr<AIMS>(ptr_);
+            }
+
+            operator bool()
+            {
+                return this->get();
             }
         };
     } // namespace parallelism
@@ -77,16 +106,16 @@ namespace mio
 
 namespace std
 {
-    template <typename T_>
-    class atomic<mio::parallelism::aba_ptr<T_>>
+    template <typename T>
+    class atomic<mio::parallelism::aba_ptr<T>>
     {
     public:
-        using aba_ptr = mio::parallelism::aba_ptr<T_>;
+        using value_type = mio::parallelism::aba_ptr<T>;
 
     private:
+        using aba_ptr = mio::parallelism::aba_ptr<T>;
         static constexpr uint64_t COUNT_MASK = aba_ptr::COUNT_MASK;
         static constexpr uint64_t POINTER_MASK = aba_ptr::POINTER_MASK;
-
         std::atomic<uint64_t> ptr_;
 
     public:
@@ -103,27 +132,33 @@ namespace std
             return *this;
         }
 
-        operator aba_ptr()
+        operator aba_ptr() const
         {
             return load();
         }
 
-        void store(aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
-        {
-            ptr_.store(desired.ptr_, failure);
-        }
-
-        aba_ptr load(std::memory_order failure = std::memory_order_seq_cst)
+        aba_ptr load(std::memory_order failure = std::memory_order_seq_cst) const
         {
             return aba_ptr(ptr_.load(failure));
         }
 
-        aba_ptr exchange(aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
+        void store(aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr(ptr_.exchange(desired, failure));
+            uint16_t count = ((desired.ptr_ & COUNT_MASK) >> 48) + 1;
+            uint64_t des = ((uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
+
+            ptr_.store(des, failure);
         }
 
-        bool compare_exchange_weak(aba_ptr &expected, aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
+        aba_ptr exchange(aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
+        {
+            uint16_t count = ((desired.ptr_ & COUNT_MASK) >> 48) + 1;
+            uint64_t des = ((uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
+
+            return aba_ptr(ptr_.exchange(des, failure));
+        }
+
+        bool compare_exchange_weak(aba_ptr &expected, const aba_ptr &desired, std::memory_order failure = std::memory_order_seq_cst)
         {
             uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
 
@@ -132,9 +167,9 @@ namespace std
             return ptr_.compare_exchange_weak(expected.ptr_, des, failure);
         }
 
-        bool compare_exchange_strong(aba_ptr &expected, aba_ptr desired, std::memory_order failure = std::memory_order_seq_cst)
+        bool compare_exchange_strong(aba_ptr &expected, const aba_ptr &desired, std::memory_order failure = std::memory_order_seq_cst)
         {
-            uint16_t count = (expected.ptr_ & COUNT_MASK) + 1;
+            uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
 
             uint64_t des = ((uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
             return ptr_.compare_exchange_strong(expected.ptr_, des, failure);
@@ -142,12 +177,15 @@ namespace std
 
         aba_ptr fetch_add(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr(ptr_.fetch_add(arg, failure));
+            uint64_t des = (1ull << 48) + (arg * sizeof(T) & POINTER_MASK);
+
+            return aba_ptr(ptr_.fetch_add(des, failure));
         }
 
         aba_ptr fetch_sub(ptrdiff_t arg, std::memory_order failure = std::memory_order_seq_cst)
         {
-            return aba_ptr(ptr_.fetch_sub(arg, failure));
+            uint64_t des = (1ull << 48) + (arg * sizeof(T) & POINTER_MASK);
+            return aba_ptr(ptr_.fetch_sub(des, failure));
         }
     };
 } // namespace std
