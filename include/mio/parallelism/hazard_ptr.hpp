@@ -10,24 +10,24 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t DEL_CHACHE>
+        template <typename T, size_t DEL_CHACHE>
         class ref_ptr;
 
-        template <typename T_, size_t DEL_CHACHE = 100>
+        template <typename T, size_t DEL_CHACHE>
         class hazard_ptr
         {
         private:
-            friend class ref_ptr<T_, DEL_CHACHE>;
+            friend class ref_ptr<T, DEL_CHACHE>;
 
             struct node
             {
-                T_ *ptr;
+                T *ptr;
                 std::atomic<node *> next;
                 std::atomic<aba_ptr<node>> free;
                 std::atomic<bool> flag;
             };
 
-            std::atomic<T_ *> ptr_;
+            std::atomic<T *> ptr_;
 
             node ref_list_;
 
@@ -94,7 +94,7 @@ namespace mio
             }
 
             //删除该指针
-            void del_ptr(T_ *ptr)
+            void del_ptr(T *ptr)
             {
                 //尝试从 free list获取一个
                 node *del = alloc(del_list_);
@@ -114,7 +114,7 @@ namespace mio
             void reclaim()
             {
                 //存储所有 正在使用的指针
-                std::unordered_set<T_ *> ref_set;
+                std::unordered_set<T *> ref_set;
 
                 for (node *n = ref_list_.next; n; n = n->next)
                 {
@@ -172,7 +172,7 @@ namespace mio
                 }
             }
 
-            hazard_ptr &operator=(T_ *ptr)
+            hazard_ptr &operator=(T *ptr)
             {
                 auto old_ptr = ptr_.exchange(ptr);
                 del_ptr(old_ptr);
@@ -180,12 +180,12 @@ namespace mio
             }
         };
 
-        template <typename T_, size_t DEL_CHACHE = 100>
+        template <typename T, size_t DEL_CHACHE = 100>
         class ref_ptr
         {
         public:
-            using hazard_ptr_t = hazard_ptr<T_, DEL_CHACHE>;
-            using node_t = typename hazard_ptr<T_, DEL_CHACHE>::node;
+            using hazard_ptr_t = hazard_ptr<T, DEL_CHACHE>;
+            using node_t = typename hazard_ptr<T, DEL_CHACHE>::node;
 
         private:
             hazard_ptr_t *hazard_ptr_;
@@ -213,17 +213,17 @@ namespace mio
                 }
             }
 
-            T_ *get()
+            T *get()
             {
                 return ref_node_->ptr;
             }
 
-            T_ &operator*()
+            T &operator*()
             {
                 return *get();
             }
 
-            T_ *operator->()
+            T *operator->()
             {
                 return get();
             }

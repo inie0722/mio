@@ -13,7 +13,7 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t SIZE_ = 4096>
+        template <typename T, size_t N>
         class disruptor
         {
         public:
@@ -32,20 +32,20 @@ namespace mio
                 }
 
             public:
-                void pull(T_ &ret)
+                void pull(T &ret)
                 {
                     //等待数据可读
-                    while (disruptor_->readable_flag_[this->limit_] != (limit_ / SIZE_) + 1)
+                    while (disruptor_->readable_flag_[this->limit_] != (limit_ / N) + 1)
                         std::this_thread::yield();
 
                     ret = disruptor_->buffer_[this->limit_];
                     limit_.fetch_add(1);
                 }
 
-                bool try_pull(T_ &ret)
+                bool try_pull(T &ret)
                 {
                     //等待数据可读
-                    while (disruptor_->readable_flag_[this->limit_] != (limit_ / SIZE_) + 1)
+                    while (disruptor_->readable_flag_[this->limit_] != (limit_ / N) + 1)
                         return false;
 
                     ret = disruptor_->buffer_[this->limit_];
@@ -64,8 +64,8 @@ namespace mio
         private:
             friend reader;
 
-            detail::ring_buffer<T_, SIZE_> buffer_;
-            detail::ring_buffer<std::atomic<size_t>, SIZE_> readable_flag_;
+            detail::ring_buffer<T, N> buffer_;
+            detail::ring_buffer<std::atomic<size_t>, N> readable_flag_;
 
             alignas(64) std::atomic<size_t> writable_limit_ = 0;
 
@@ -77,7 +77,7 @@ namespace mio
                 this->mutex_.lock_shared();
                 for (auto &it : this->reader_list_)
                 {
-                    if (index >= it->limit_ + SIZE_)
+                    if (index >= it->limit_ + N)
                     {
                         this->mutex_.unlock_shared();
                         return false;
@@ -97,7 +97,7 @@ namespace mio
 
             disruptor()
             {
-                for (size_t i = 0; i < SIZE_; i++)
+                for (size_t i = 0; i < N; i++)
                 {
                     readable_flag_[i] = 0;
                 }
@@ -112,7 +112,7 @@ namespace mio
                 return this->reader_list_.back();
             }
 
-            void push(const T_ &val)
+            void push(const T &val)
             {
                 size_t index = this->writable_limit_.fetch_add(1);
 
@@ -121,10 +121,10 @@ namespace mio
                     std::this_thread::yield();
 
                 this->buffer_[index] = val;
-                this->readable_flag_[index] = (index / SIZE_) + 1;
+                this->readable_flag_[index] = (index / N) + 1;
             }
 
-            bool try_push(const T_ &val, context &context)
+            bool try_push(const T &val, context &context)
             {
                 bool &flag = context.flag;
 
@@ -143,7 +143,7 @@ namespace mio
                 }
 
                 this->buffer[index] = val;
-                this->readable_flag[index] = (index / SIZE_) + 1;
+                this->readable_flag[index] = (index / N) + 1;
 
                 flag = true;
                 return true;

@@ -10,7 +10,7 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T_, size_t N_ = 4096>
+        template <typename T, size_t N>
         class channel
         {
         public:
@@ -18,7 +18,7 @@ namespace mio
             static constexpr uint8_t DISCONNECTED = 1;
 
         private:
-            mio::parallelism::pipe<T_, N_> pipe_[2];
+            mio::parallelism::pipe<T, N> pipe_[2];
             std::atomic<uint8_t> status_ = CONNECTED;
 
         public:
