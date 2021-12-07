@@ -52,18 +52,19 @@ namespace mio
         }
     } // namespace chrono
 
-    inline std::string to_string(std::chrono::nanoseconds tm)
+    template <typename Rep, typename Period>
+    inline std::string to_string(const std::chrono::duration<Rep, Period> &rtime)
     {
 
         using namespace std::chrono;
         using namespace std::chrono_literals;
 
-        std::chrono::time_point<std::chrono::system_clock> tt(std::chrono::duration_cast<std::chrono::milliseconds>(tm));
-        unsigned long long ms = (unsigned long long)(tm % 1s / 1ms);
-        unsigned long long us = (unsigned long long)(tm % 1ms / 1us);
-        unsigned long long ns = (unsigned long long)(tm % 1us / 1ns);
+        unsigned long long ms = (unsigned long long)(rtime % 1s / 1ms);
+        unsigned long long us = (unsigned long long)(rtime % 1ms / 1us);
+        unsigned long long ns = (unsigned long long)(rtime % 1us / 1ns);
 
         std::stringstream ss;
+        std::chrono::time_point<std::chrono::system_clock> tt(std::chrono::duration_cast<std::chrono::milliseconds>(rtime));
         auto t = std::chrono::system_clock::to_time_t(tt);
         ss << std::put_time(std::localtime(&t), "%F %T ");
 
