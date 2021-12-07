@@ -50,11 +50,8 @@ namespace mio
         template <typename Stream, typename... Args>
         void operator()(Stream &stream, const std::string &fmt, const Args &...args)
         {
-            auto fun = [=, &stream]()
-            {
-                stream << fmt::format(fmt, args...);
-            };
-            queue_.push(fun);
+            queue_.push([=, &stream]()
+                        { stream << fmt::format(fmt, args...); });
             semaphore_.post();
         }
     };
