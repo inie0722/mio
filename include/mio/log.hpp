@@ -24,10 +24,6 @@ namespace mio
         log(size_t n)
             : queue_(n), semaphore_(0)
         {
-        }
-
-        void run()
-        {
             this->flag_ = true;
             thread_ = std::thread([&]()
                                   {
@@ -42,8 +38,9 @@ namespace mio
                                   });
         }
 
-        void stop()
+        ~log()
         {
+
             this->flag_ = false;
             thread_.join();
         }
