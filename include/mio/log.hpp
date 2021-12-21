@@ -7,9 +7,10 @@
 #include <list>
 #include <mutex>
 
-#include <mio/chrono.hpp>
-
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <fmt/format.h>
+
+#include <mio/chrono.hpp>
 
 namespace mio
 {
@@ -20,6 +21,7 @@ namespace mio
         struct message
         {
             void (*fun)(void *ptr);
+            void *ptr;
             size_t size;
         };
 
@@ -38,16 +40,16 @@ namespace mio
                 auto writable_limit = writable_limit_.load();
                 auto r = N - writable_limit % N;
 
+                message *ret = (message *)&data_[writable_limit % N];
                 all_size = r < all_size + sizeof(message) ? r + all_size + sizeof(message) : all_size;
-
-                auto writable_index = writable_limit + all_size % N;
+                void *ptr = r < all_size ? (void*)&data_[0] : (void*)&ret[1];
 
                 //写满了等待 可写
                 while (N - (writable_limit - readable_limit_) < all_size)
                     ;
 
-                message *ret = (message *)&data_[writable_limit % N];
                 ret->size = all_size;
+                ret->ptr = ptr;
                 return ret;
             }
 
@@ -74,7 +76,7 @@ namespace mio
 
         inline static std::mutex mutex_;
         inline static std::list<SPSC_buffer *> list_;
-
+        inline static boost::interprocess::interprocess_semaphore semaphore_{0};
         SPSC_buffer buffer_;
         typename std::list<SPSC_buffer *>::iterator iterator_;
 
@@ -84,7 +86,7 @@ namespace mio
             using args_t = std::tuple<Stream &, Format, Args...>;
 
             auto msg = buffer_.alloc(sizeof(args_t));
-            new (&msg[1]) args_t(stream, fmt, args...);
+            new (msg->ptr) args_t(stream, fmt, args...);
             msg->fun = [](void *ptr)
             {
                 auto *args = reinterpret_cast<args_t *>(ptr);
@@ -92,6 +94,7 @@ namespace mio
             };
 
             buffer_.push(msg);
+            semaphore_.post();
         }
 
     public:
@@ -121,15 +124,16 @@ namespace mio
 
         static void run_once()
         {
+            semaphore_.wait();
+            std::lock_guard lock(mutex_);
             for (size_t i = 0; i < list_.size(); i++)
             {
-                std::lock_guard lock(mutex_);
                 auto front = list_.front();
                 list_.pop_front();
                 if (front->size())
                 {
                     auto msg = front->front();
-                    msg->fun(&msg[1]);
+                    msg->fun(msg->ptr);
                     front->pop(msg);
 
                     list_.push_back(front);
