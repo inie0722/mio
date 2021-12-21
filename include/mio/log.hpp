@@ -4,50 +4,50 @@
 #include <stdint.h>
 #include <atomic>
 #include <tuple>
+#include <list>
+#include <mutex>
 
-#include <mio/parallelism/ring_queue.hpp>
 #include <mio/chrono.hpp>
-#include <mio/parallelism/utility.hpp>
 
 #include <fmt/format.h>
 
 namespace mio
 {
-    template <size_t QUEUE_SIZE = 1024, size_t BUFFER_SIZE = 65536>
+    template <size_t N = 65536>
     class log
     {
     private:
         struct message
         {
-            void *ptr;
             void (*fun)(void *ptr);
             size_t size;
-            std::atomic<uint64_t> *readable_limit;
         };
 
         class SPSC_buffer
         {
         private:
-            char data_[BUFFER_SIZE];
-            alignas(CACHE_LINE) std::atomic<uint64_t> writable_limit_ = 0;
-            alignas(CACHE_LINE) std::atomic<uint64_t> readable_limit_ = 0;
+            char data_[N];
+            alignas(128) std::atomic<uint64_t> writable_limit_ = 0;
+            alignas(128) std::atomic<uint64_t> readable_limit_ = 0;
 
         public:
-            message alloc(size_t size)
+            message *alloc(size_t size)
             {
-                message ret;
-                ret.readable_limit = &readable_limit_;
-                auto writable_limit = writable_limit_.load();
-                auto r = BUFFER_SIZE - writable_limit % BUFFER_SIZE;
-                ret.size = r < size ? r + size : size;
+                auto all_size = size + sizeof(message);
 
-                auto writable_index = writable_limit + ret.size % BUFFER_SIZE;
+                auto writable_limit = writable_limit_.load();
+                auto r = N - writable_limit % N;
+
+                all_size = r < all_size + sizeof(message) ? r + all_size + sizeof(message) : all_size;
+
+                auto writable_index = writable_limit + all_size % N;
 
                 //写满了等待 可写
-                while (BUFFER_SIZE - (writable_limit - readable_limit_) < ret.size)
+                while (N - (writable_limit - readable_limit_) < all_size)
                     ;
 
-                ret.ptr = &data_[writable_index];
+                message *ret = (message *)&data_[writable_limit % N];
+                ret->size = all_size;
                 return ret;
             }
 
@@ -55,34 +55,63 @@ namespace mio
             {
                 return writable_limit_ - readable_limit_;
             }
+
+            void push(message *msg)
+            {
+                writable_limit_ += msg->size;
+            }
+
+            message *front()
+            {
+                return (message *)&data_[readable_limit_ % N];
+            }
+
+            void pop(message *msg)
+            {
+                this->readable_limit_ += msg->size;
+            }
         };
 
+        inline static std::mutex mutex_;
+        inline static std::list<SPSC_buffer *> list_;
+
         SPSC_buffer buffer_;
-        inline static mio::parallelism::ring_queue<message> queue_{QUEUE_SIZE};
+        typename std::list<SPSC_buffer *>::iterator iterator_;
+
+        template <typename Stream, typename Format, size_t... Index, typename... Args>
+        void operator()(Stream &stream, const Format &fmt, std::index_sequence<Index...>, const Args &...args)
+        {
+            using args_t = std::tuple<Stream &, Format, Args...>;
+
+            auto msg = buffer_.alloc(sizeof(args_t));
+            new (&msg[1]) args_t(stream, fmt, args...);
+            msg->fun = [](void *ptr)
+            {
+                auto *args = reinterpret_cast<args_t *>(ptr);
+                std::get<0>(*args) << fmt::format(std::get<1>(*args), std::get<Index + 2>(*args)...);
+            };
+
+            buffer_.push(msg);
+        }
 
     public:
-        log() = default;
+        log()
+        {
+            std::lock_guard lock(mutex_);
+            list_.push_back(&buffer_);
+            iterator_ = --list_.end();
+        }
 
         ~log()
         {
-            while (this->size())
-                ;
+            std::lock_guard lock(mutex_);
+            list_.erase(iterator_);
         }
 
-        template <typename Stream, typename Format, typename... Args>
+        template <typename Stream, typename Format, typename... Args, typename Index = std::make_index_sequence<sizeof...(Args)>>
         void operator()(Stream &stream, const Format &fmt, const Args &...args)
         {
-            using args_t = std::tuple<Stream &, Format, Args...>;
-            auto msg = buffer_.alloc(sizeof(args_t));
-            new (msg.ptr) args_t(stream, fmt, args...);
-
-            msg.fun = [](void *ptr)
-            {
-                auto *args = reinterpret_cast<args_t *>(ptr);
-                std::get<Stream &>(*args) << fmt::format(std::get<Format>(*args), std::get<Args>(*args)...);
-            };
-
-            queue_.push(msg);
+            this->operator()(stream, fmt, Index{}, args...);
         }
 
         size_t size() const
@@ -92,10 +121,25 @@ namespace mio
 
         static void run_once()
         {
-            message msg;
-            queue_.pop(msg);
-            msg.fun(msg.ptr);
-            msg.readable_limit += msg.size;
+            for (size_t i = 0; i < list_.size(); i++)
+            {
+                std::lock_guard lock(mutex_);
+                auto front = list_.front();
+                list_.pop_front();
+                if (front->size())
+                {
+                    auto msg = front->front();
+                    msg->fun(&msg[1]);
+                    front->pop(msg);
+
+                    list_.push_back(front);
+                    break;
+                }
+                else
+                {
+                    list_.push_back(front);
+                }
+            }
         }
     };
 }
