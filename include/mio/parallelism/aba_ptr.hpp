@@ -189,12 +189,12 @@ namespace std
             ptr_.wait(old.ptr_, order);
         }
 
-        void notify_one() volatile noexcept
+        void notify_one() noexcept
         {
             ptr_.notify_one();
         }
 
-        void notify_all() volatile noexcept
+        void notify_all() noexcept
         {
             ptr_.notify_all();
         }
