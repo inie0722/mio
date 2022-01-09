@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <atomic>
 
-static_assert(sizeof(void*) == 8, "64-bit system only");
+static_assert(sizeof(void *) == 8, "64-bit system only");
 
 namespace mio
 {
@@ -13,6 +13,10 @@ namespace mio
         template <typename T>
         class aba_ptr
         {
+        public:
+            using element_type = T;
+            using pointer = element_type *;
+
         private:
             friend class std::atomic<aba_ptr<T>>;
 
@@ -34,7 +38,7 @@ namespace mio
             aba_ptr() = default;
             ~aba_ptr() = default;
 
-            aba_ptr(T *ptr) noexcept
+            aba_ptr(pointer ptr) noexcept
             {
                 *this = ptr;
             }
@@ -44,7 +48,7 @@ namespace mio
                 ptr_ = ptr.ptr_;
             }
 
-            aba_ptr &operator=(T *ptr) noexcept
+            aba_ptr &operator=(pointer ptr) noexcept
             {
                 ptr_ &= COUNT_MASK;
                 ptr_ += (std::uint64_t)ptr;
@@ -58,22 +62,22 @@ namespace mio
                 return *this;
             }
 
-            T *get() const volatile noexcept
+            pointer get() const volatile noexcept
             {
-                return reinterpret_cast<T *>(ptr_ & POINTER_MASK);
+                return reinterpret_cast<pointer>(ptr_ & POINTER_MASK);
             }
 
-            T &operator*() const volatile noexcept
+            element_type &operator*() const volatile noexcept
             {
                 return *get();
             }
 
-            T *operator->() const volatile noexcept
+            pointer operator->() const volatile noexcept
             {
                 return get();
             }
 
-            T& operator[](std::size_t i ) const volatile noexcept
+            element_type operator[](std::size_t i) const volatile noexcept
             {
                 return get()[i];
             }
@@ -94,9 +98,24 @@ namespace mio
                 return aba_ptr<AIMS>(ptr_);
             }
 
+            operator aba_ptr<const element_type>() const volatile noexcept
+            {
+                return aba_ptr<const element_type>(ptr_);
+            }
+
             explicit operator bool() const volatile noexcept
             {
                 return this->get() != nullptr;
+            }
+
+            static aba_ptr pointer_to(element_type &r) noexcept
+            {
+                return aba_ptr(r);
+            }
+
+            static element_type *to_address(aba_ptr p) noexcept
+            {
+                return p.get();
             }
         };
     } // namespace parallelism
@@ -110,6 +129,7 @@ namespace std
     public:
         using value_type = mio::parallelism::aba_ptr<T>;
         static constexpr bool is_always_lock_free = std::atomic<std::uint64_t>::is_always_lock_free;
+
     private:
         using aba_ptr = mio::parallelism::aba_ptr<T>;
         static constexpr std::uint64_t COUNT_MASK = aba_ptr::COUNT_MASK;
@@ -121,11 +141,11 @@ namespace std
 
         ~atomic() = default;
 
-        atomic(const atomic&) = delete;
-    
+        atomic(const atomic &) = delete;
+
         atomic(const aba_ptr &desired) noexcept
         {
-            ptr_ = desired .ptr_;
+            ptr_ = desired.ptr_;
         }
 
         aba_ptr operator=(aba_ptr desired) volatile noexcept
@@ -134,7 +154,7 @@ namespace std
             return desired;
         }
 
-        atomic& operator=( const atomic& ) volatile = delete;
+        atomic &operator=(const atomic &) volatile = delete;
 
         bool is_lock_free() const volatile noexcept
         {
