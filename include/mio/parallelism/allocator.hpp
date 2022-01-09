@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
+#include <atomic>
 #include <type_traits>
 
-#include "mio/parallelism/aba_ptr.hpp"
-#include "mio/parallelism/utility.hpp"
+#include <mio/parallelism/aba_ptr.hpp>
 
 namespace mio
 {
@@ -15,24 +15,22 @@ namespace mio
         {
         public:
             using value_type = T;
-            using size_type = size_t;
-            using difference_type = ptrdiff_t;
-            using propagate_on_container_move_assignment = std::true_type;
+            using pointer = aba_ptr<T>;
 
         private:
-            union alignas(alignof(std::atomic<aba_ptr<void>>) > alignof(T) ? alignof(std::atomic<aba_ptr<void>>) : alignof(T)) node
+            union node
             {
-                std::atomic<aba_ptr<node>> next;
-                char data[sizeof(T)];
+                std::atomic<aba_ptr<node>> next = aba_ptr<node>(nullptr);
+                value_type data;
             };
 
-            alignas(CACHE_LINE) std::atomic<aba_ptr<node>> free_list_;
+            std::atomic<aba_ptr<node>> free_list_ = aba_ptr<node>(nullptr);
 
         public:
-            allocator()
-            {
-                free_list_ = nullptr;
-            }
+            allocator() = default;
+
+            allocator(const allocator &) = delete;
+            allocator &operator=(const allocator &) = delete;
 
             ~allocator()
             {
@@ -46,35 +44,51 @@ namespace mio
                 }
             }
 
-            aba_ptr<T> allocate()
+            template <class T1, class T2>
+            friend bool operator==(const mio::parallelism::allocator<T1> &lhs, const mio::parallelism::allocator<T2> &rhs) noexcept
             {
+                return lhs.free_list_.load() == rhs.free_list_.load();
+            }
+
+            pointer allocate(std::size_t n)
+            {
+                if (n != 1)
+                {
+                    throw std::invalid_argument("n should be equal to 1");
+                }
+
                 aba_ptr<node> exp = free_list_.load();
 
                 while (1)
                 {
                     if (!exp)
                     {
-                        return new T;
+                        return pointer(reinterpret_cast<value_type *>(new node));
                     }
 
                     aba_ptr<node> next = exp->next;
                     if (free_list_.compare_exchange_weak(exp, next))
                     {
-                        return static_cast<aba_ptr<T>>(exp);
+                        return reinterpret_cast<pointer &>(exp);
                     }
                 }
             }
 
-            void deallocate(aba_ptr<T> p)
+            void deallocate(pointer p, std::size_t n)
             {
-                aba_ptr<node> n = static_cast<aba_ptr<node>>(p);
+                if (n != 1)
+                {
+                    throw std::invalid_argument("n should be equal to 1");
+                }
+
+                aba_ptr<node> node_ptr = reinterpret_cast<aba_ptr<node> &>(p);
 
                 while (1)
                 {
                     aba_ptr<node> exp = free_list_;
-                    n->next = free_list_.load();
+                    node_ptr->next = free_list_.load();
 
-                    if (free_list_.compare_exchange_weak(exp, n))
+                    if (free_list_.compare_exchange_weak(exp, node_ptr))
                         return;
                 }
             }
