@@ -1,22 +1,16 @@
 #pragma once
 
-#include <stdint.h>
-
-#include <thread>
-#include <functional>
+#include <cstddef>
 
 namespace mio
 {
     namespace parallelism
     {
-        namespace wait
-        {
-            typedef std::function<void(size_t)> handler_t;
-
-            inline auto active = [](size_t) {};
-            inline auto yield = [](size_t) { std::this_thread::yield(); };
-        } // namespace wait
-
-        inline constexpr size_t CACHE_LINE = 64;
+#ifdef __x86_64__
+        inline constexpr std::size_t hardware_destructive_interference_size = 64;
+        inline constexpr std::size_t hardware_constructive_interference_size = 64;
+#else
+        static_assert(0, "Does not support current cpu architecture");
+#endif
     } // namespace parallelism
 } // namespace mio
