@@ -148,7 +148,7 @@ namespace std
             ptr_ = desired.ptr_;
         }
 
-        aba_ptr operator=(aba_ptr desired) volatile noexcept
+        aba_ptr operator=(const aba_ptr &desired) volatile noexcept
         {
             store(desired);
             return desired;
