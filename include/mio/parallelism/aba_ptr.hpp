@@ -92,12 +92,6 @@ namespace mio
                 return this->get() == nullptr;
             }
 
-            template <typename AIMS>
-            explicit operator aba_ptr<AIMS>() const volatile noexcept
-            {
-                return aba_ptr<AIMS>(ptr_);
-            }
-
             operator aba_ptr<const element_type>() const volatile noexcept
             {
                 return aba_ptr<const element_type>(ptr_);
