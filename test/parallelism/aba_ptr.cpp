@@ -1,8 +1,8 @@
 #include <iostream>
+#include <memory>
+
 #include <gtest/gtest.h>
 #include <mio/parallelism/aba_ptr.hpp>
-#include <memory>
-#include <boost/container/vector.hpp>
 
 TEST(aba_ptr, aba_ptr) 
 {
