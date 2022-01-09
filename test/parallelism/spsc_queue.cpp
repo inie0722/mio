@@ -1,29 +1,35 @@
-#include "mio/parallelism/pipe.hpp"
-
-#include <assert.h>
-#include <stdint.h>
-
 #include <iostream>
 #include <thread>
+#include <cstddef>
+#include <vector>
 
-constexpr size_t SIZE = 10000;
+#include <gtest/gtest.h>
+#include <mio/parallelism/spsc_queue.hpp>
 
-constexpr size_t BUF_SIZE = 4096;
+constexpr size_t COUNT = 100000;
+
+constexpr size_t BUFFER_SIZE = 4096;
 
 constexpr size_t THREAD_WRITE_NUM = 1;
 
 constexpr size_t THREAD_READ_NUM = 1;
 
-#include <vector>
-
 class verify
 {
 public:
-    template <size_t DATA_SIZE_>
+    template <size_t DATA_SIZE>
+    struct value
+    {
+        size_t val;
+        char _[DATA_SIZE - sizeof(val)];
+    };
+
+    template <size_t DATA_SIZE>
     void run_one()
     {
-        mio::parallelism::pipe<std::array<char, DATA_SIZE_>> pipe(BUF_SIZE);
-        size_t array[SIZE] = {0};
+        using value = value<DATA_SIZE>;
+        mio::parallelism::spsc_queue<value> pipe(BUFFER_SIZE);
+        std::vector<size_t> array(COUNT);
 
         std::chrono::nanoseconds write_diff;
         std::chrono::nanoseconds read_diff;
@@ -33,35 +39,35 @@ public:
 
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
         {
-            write_thread[i] = std::thread([&]() {
-                std::array<char, DATA_SIZE_> data;
+            write_thread[i] = std::thread([&]()
+                                          {
+                value data;
 
                 auto start = std::chrono::steady_clock::now();
-                for (size_t i = 0; i < SIZE; i++)
+                for (size_t i = 0; i < COUNT; i++)
                 {
-                    *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)] = i;
-                    pipe.write(&data, 1);
+                    data.val = i;
+                    pipe.push(&data, 1);
                 }
                 auto end = std::chrono::steady_clock::now();
-                write_diff = end - start;
-            });
+                write_diff = end - start; });
         }
 
         for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
-            read_thread[i] = std::thread([&]() {
-                std::array<char, DATA_SIZE_> data;
+            read_thread[i] = std::thread([&]()
+                                         {
+               value data;
 
                 auto start = std::chrono::steady_clock::now();
-                for (size_t i = 0; i < SIZE; i++)
+                for (size_t i = 0; i < COUNT; i++)
                 {
-                    pipe.read(&data, 1);
-                    size_t index = *(size_t *)&data[DATA_SIZE_ - sizeof(size_t)];
+                    pipe.pop(&data, 1);
+                    size_t index = data.val;
                     array[index]++;
                 }
                 auto end = std::chrono::steady_clock::now();
-                read_diff = end - start;
-            });
+                read_diff = end - start; });
         }
 
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
@@ -76,7 +82,7 @@ public:
 
         size_t max = 0;
         size_t min = 0;
-        for (size_t i = 0; i < SIZE; i++)
+        for (size_t i = 0; i < COUNT; i++)
         {
             if (array[i] != THREAD_WRITE_NUM)
             {
@@ -87,10 +93,10 @@ public:
             }
         }
 
-        assert(max == 0);
-        assert(min == 0);
+        printf("size/%lu byte\t w/%lu ns\t r/%lu ns\n", DATA_SIZE, write_diff.count() / COUNT, read_diff.count() / COUNT);
 
-        printf("size/%lu byte\t w/%lu ns\t r/%lu ns\n", DATA_SIZE_, write_diff.count() / SIZE, read_diff.count() / SIZE);
+        ASSERT_TRUE(max == 0);
+        ASSERT_TRUE(min == 0);
     }
 
     template <size_t... DATA_SIZE_>
@@ -100,9 +106,14 @@ public:
     }
 };
 
-int main(void)
+TEST(spsc_queue, spsc_queue)
 {
     verify v;
     v.run<64, 128, 256, 512, 1024>();
-    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
