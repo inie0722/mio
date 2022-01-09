@@ -92,6 +92,11 @@ namespace mio
                         return;
                 }
             }
+
+            bool is_lock_free() const noexcept
+            {
+                return free_list_.is_lock_free();
+            }
         };
     } // namespace parallelism
 } // namespace mio
