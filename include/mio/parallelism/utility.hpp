@@ -1,12 +1,16 @@
 #pragma once
 
 #include <cstddef>
+#include <new>
 
 namespace mio
 {
     namespace parallelism
     {
-#ifdef __x86_64__
+#if defined __cpp_lib_hardware_interference_size
+        inline constexpr std::size_t hardware_destructive_interference_size = std::hardware_destructive_interference_size;
+        inline constexpr std::size_t hardware_constructive_interference_size = std::hardware_constructive_interference_size;
+#elif defined __x86_64__
         inline constexpr std::size_t hardware_destructive_interference_size = 64;
         inline constexpr std::size_t hardware_constructive_interference_size = 64;
 #else
