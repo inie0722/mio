@@ -107,7 +107,7 @@ namespace mio
                 return aba_ptr(r);
             }
 
-            static element_type *to_address(aba_ptr p) noexcept
+            static pointer to_address(aba_ptr p) noexcept
             {
                 return p.get();
             }
