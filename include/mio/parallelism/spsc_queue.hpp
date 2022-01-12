@@ -6,8 +6,6 @@
 #include <algorithm>
 #include <memory>
 
-#include <mio/parallelism/utility.hpp>
-
 namespace mio
 {
     namespace parallelism
@@ -34,14 +32,14 @@ namespace mio
             using const_pointer = typename allocator_traits::const_pointer;
 
         private:
-            alignas(hardware_destructive_interference_size) const size_type max_size_;
+            allocator_type allocator_;
 
-            alignas(hardware_destructive_interference_size) allocator_type allocator_;
+            pointer data_;
 
-            alignas(hardware_destructive_interference_size) pointer data_;
+            const size_type max_size_;
 
-            alignas(hardware_destructive_interference_size) std::atomic<size_type> writable_limit_ = 0;
-            alignas(hardware_destructive_interference_size) std::atomic<size_type> readable_limit_ = 0;
+            std::atomic<size_type> writable_limit_ = 0;
+            std::atomic<size_type> readable_limit_ = 0;
 
             size_type get_index(size_type index) const
             {
