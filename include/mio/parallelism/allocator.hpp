@@ -61,13 +61,13 @@ namespace mio
                 {
                     if (!exp)
                     {
-                        return pointer(reinterpret_cast<value_type *>(alloc_.allocate(1)));
+                        return pointer(&alloc_.allocate(1)->data);
                     }
 
                     aba_ptr<node> next = exp->next;
                     if (free_list_.compare_exchange_weak(exp, next))
                     {
-                        return reinterpret_cast<pointer &>(exp);
+                        return &exp->data;
                     }
                 }
             }
@@ -79,7 +79,8 @@ namespace mio
                     throw std::invalid_argument("n should be equal to 1");
                 }
 
-                aba_ptr<node> node_ptr = reinterpret_cast<aba_ptr<node> &>(p);
+                void *void_p = &p;
+                aba_ptr<node> node_ptr = *reinterpret_cast<aba_ptr<node> *>(void_p);
 
                 while (1)
                 {
