@@ -10,10 +10,11 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T>
+        template <typename T, typename Allocator = std::allocator<T>>
         class allocator
-        {
+        {            
         public:
+            using allocator_type = Allocator;
             using value_type = T;
             using pointer = aba_ptr<T>;
 
@@ -23,6 +24,8 @@ namespace mio
                 std::atomic<aba_ptr<node>> next = aba_ptr<node>(nullptr);
                 value_type data;
             };
+
+            std::allocator_traits<Allocator>::rebind_alloc<node> alloc_;
 
             std::atomic<aba_ptr<node>> free_list_ = aba_ptr<node>(nullptr);
 
@@ -38,7 +41,7 @@ namespace mio
                 {
                     aba_ptr<node> next = free_list_.load()->next;
 
-                    delete free_list_.load().get();
+                    alloc_.deallocate(free_list_.load().get(), 1);
 
                     free_list_ = next;
                 }
@@ -63,7 +66,7 @@ namespace mio
                 {
                     if (!exp)
                     {
-                        return pointer(reinterpret_cast<value_type *>(new node));
+                        return pointer(reinterpret_cast<value_type *>(alloc_.allocate(1)));
                     }
 
                     aba_ptr<node> next = exp->next;
