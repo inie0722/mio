@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <atomic>
 #include <type_traits>
+#include <memory>
 
 #include <mio/parallelism/aba_ptr.hpp>
 
@@ -12,7 +13,7 @@ namespace mio
     {
         template <typename T, typename Allocator = std::allocator<T>>
         class allocator
-        {            
+        {
         public:
             using allocator_type = Allocator;
             using value_type = T;
@@ -21,11 +22,11 @@ namespace mio
         private:
             union node
             {
-                std::atomic<aba_ptr<node>> next = aba_ptr<node>(nullptr);
+                std::atomic<aba_ptr<node>> next;
                 value_type data;
             };
 
-            std::allocator_traits<Allocator>::rebind_alloc<node> alloc_;
+            typename std::allocator_traits<Allocator>::rebind_alloc<node> alloc_;
 
             std::atomic<aba_ptr<node>> free_list_ = aba_ptr<node>(nullptr);
 
@@ -45,12 +46,6 @@ namespace mio
 
                     free_list_ = next;
                 }
-            }
-
-            template <class T1, class T2>
-            friend bool operator==(const mio::parallelism::allocator<T1> &lhs, const mio::parallelism::allocator<T2> &rhs) noexcept
-            {
-                return lhs.free_list_.load() == rhs.free_list_.load();
             }
 
             pointer allocate(std::size_t n)
@@ -100,6 +95,15 @@ namespace mio
             {
                 return free_list_.is_lock_free();
             }
+
+            template <class T1, class T2>
+            friend bool operator==(const mio::parallelism::allocator<T1> &lhs, const mio::parallelism::allocator<T2> &rhs) noexcept;
         };
     } // namespace parallelism
 } // namespace mio
+
+template <class T1, class T2>
+bool operator==(const mio::parallelism::allocator<T1> &lhs, const mio::parallelism::allocator<T2> &rhs) noexcept
+{
+    return lhs.free_list_.load() == rhs.free_list_.load();
+}
