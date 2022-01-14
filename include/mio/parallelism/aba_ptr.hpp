@@ -27,11 +27,11 @@ namespace mio
 
             static constexpr std::uint64_t POINTER_MASK = ~COUNT_MASK;
 
-            std::uint64_t ptr_;
+            std::uint64_t ptr_ = 0;
 
             aba_ptr(std::uint64_t ptr)
             {
-                ptr_ = ptr;
+                this->ptr_ = ptr;
             }
 
         public:
@@ -45,26 +45,26 @@ namespace mio
 
             aba_ptr(const aba_ptr &ptr) noexcept
             {
-                ptr_ = ptr.ptr_;
+                this->ptr_ = ptr.ptr_;
             }
 
             aba_ptr &operator=(pointer ptr) noexcept
             {
-                ptr_ &= COUNT_MASK;
-                ptr_ += (std::uint64_t)ptr;
+                this->ptr_ &= COUNT_MASK;
+                this->ptr_ += (std::uint64_t)ptr;
 
                 return *this;
             }
 
             aba_ptr &operator=(const aba_ptr &ptr) noexcept
             {
-                ptr_ = ptr.ptr_;
+                this->ptr_ = ptr.ptr_;
                 return *this;
             }
 
             pointer get() const volatile noexcept
             {
-                return reinterpret_cast<pointer>(ptr_ & POINTER_MASK);
+                return reinterpret_cast<pointer>(this->ptr_ & POINTER_MASK);
             }
 
             element_type &operator*() const volatile noexcept
@@ -139,7 +139,7 @@ namespace std
 
         atomic(const aba_ptr &desired) noexcept
         {
-            ptr_ = desired.ptr_;
+            this->ptr_ = desired.ptr_;
         }
 
         aba_ptr operator=(const aba_ptr &desired) volatile noexcept
@@ -152,7 +152,7 @@ namespace std
 
         bool is_lock_free() const volatile noexcept
         {
-            return ptr_.is_lock_free();
+            return this->ptr_.is_lock_free();
         }
 
         void store(aba_ptr desired, std::memory_order order = std::memory_order_seq_cst) volatile noexcept
@@ -160,12 +160,12 @@ namespace std
             uint16_t count = ((desired.ptr_ & COUNT_MASK) >> 48) + 1;
             std::uint64_t des = ((std::uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
 
-            ptr_.store(des, order);
+            this->ptr_.store(des, order);
         }
 
         aba_ptr load(std::memory_order order = std::memory_order_seq_cst) const volatile noexcept
         {
-            return aba_ptr(ptr_.load(order));
+            return aba_ptr(this->ptr_.load(order));
         }
 
         operator aba_ptr() const volatile noexcept
@@ -178,7 +178,7 @@ namespace std
             uint16_t count = ((desired.ptr_ & COUNT_MASK) >> 48) + 1;
             std::uint64_t des = ((std::uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
 
-            return aba_ptr(ptr_.exchange(des, order));
+            return aba_ptr(this->ptr_.exchange(des, order));
         }
 
         bool compare_exchange_weak(aba_ptr &expected, aba_ptr desired, std::memory_order order = std::memory_order_seq_cst) volatile noexcept
@@ -187,7 +187,7 @@ namespace std
 
             std::uint64_t des = ((std::uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
 
-            return ptr_.compare_exchange_weak(expected.ptr_, des, order);
+            return this->ptr_.compare_exchange_weak(expected.ptr_, des, order);
         }
 
         bool compare_exchange_strong(aba_ptr &expected, aba_ptr desired, std::memory_order order = std::memory_order_seq_cst) volatile noexcept
@@ -195,35 +195,35 @@ namespace std
             uint16_t count = ((expected.ptr_ & COUNT_MASK) >> 48) + 1;
 
             std::uint64_t des = ((std::uint64_t)count << 48) + (desired.ptr_ & POINTER_MASK);
-            return ptr_.compare_exchange_strong(expected.ptr_, des, order);
+            return this->ptr_.compare_exchange_strong(expected.ptr_, des, order);
         }
 
         void wait(aba_ptr old, std::memory_order order = std::memory_order::seq_cst) noexcept
         {
-            ptr_.wait(old.ptr_, order);
+            this->ptr_.wait(old.ptr_, order);
         }
 
         void notify_one() noexcept
         {
-            ptr_.notify_one();
+            this->ptr_.notify_one();
         }
 
         void notify_all() noexcept
         {
-            ptr_.notify_all();
+            this->ptr_.notify_all();
         }
 
         aba_ptr fetch_add(ptrdiff_t arg, std::memory_order order = std::memory_order_seq_cst) volatile noexcept
         {
             std::uint64_t des = (1ull << 48) + (arg * sizeof(T) & POINTER_MASK);
 
-            return aba_ptr(ptr_.fetch_add(des, order));
+            return aba_ptr(this->ptr_.fetch_add(des, order));
         }
 
         aba_ptr fetch_sub(ptrdiff_t arg, std::memory_order order = std::memory_order_seq_cst) volatile noexcept
         {
             std::uint64_t des = (1ull << 48) + (arg * sizeof(T) & POINTER_MASK);
-            return aba_ptr(ptr_.fetch_sub(des, order));
+            return aba_ptr(this->ptr_.fetch_sub(des, order));
         }
     };
 } // namespace std
