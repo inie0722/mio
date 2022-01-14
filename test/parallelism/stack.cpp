@@ -1,5 +1,3 @@
-#include <boost/lockfree/stack.hpp>
-
 #include <assert.h>
 #include <stdint.h>
 
@@ -9,6 +7,9 @@
 #include <stack>
 #include <mutex>
 
+#include <gtest/gtest.h>
+#include <mio/parallelism/stack.hpp>
+
 constexpr size_t SIZE = 10000;
 
 constexpr size_t BUF_SIZE = 4096;
@@ -16,8 +17,6 @@ constexpr size_t BUF_SIZE = 4096;
 constexpr size_t THREAD_WRITE_NUM = 16;
 
 constexpr size_t THREAD_READ_NUM = 16;
-
-#include "mio/parallelism/stack.hpp"
 
 using namespace mio::parallelism;
 
@@ -31,6 +30,7 @@ public:
 
         auto queue_ptr = std::make_unique<queue_t>();
         queue_t &queue = *queue_ptr;
+
         std::atomic<size_t> array[SIZE] = {0};
 
         std::chrono::nanoseconds write_diff;
@@ -41,7 +41,8 @@ public:
 
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
         {
-            write_thread[i] = std::thread([&]() {
+            write_thread[i] = std::thread([&]()
+                                          {
                 std::array<char, DATA_SIZE_> data;
 
                 auto start = std::chrono::steady_clock::now();
@@ -52,14 +53,14 @@ public:
                     queue.push(data);
                 }
                 auto end = std::chrono::steady_clock::now();
-                write_diff = end - start;
-            });
+                write_diff = end - start; });
         }
 
         for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
 
-            read_thread[i] = std::thread([&]() {
+            read_thread[i] = std::thread([&]()
+                                         {
                 std::array<char, DATA_SIZE_> data;
 
                 auto start = std::chrono::steady_clock::now();
@@ -71,8 +72,7 @@ public:
                     array[index]++;
                 }
                 auto end = std::chrono::steady_clock::now();
-                read_diff = end - start;
-            });
+                read_diff = end - start; });
         }
 
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
@@ -111,9 +111,15 @@ public:
     }
 };
 
-int main(void)
+TEST(stack, stack)
 {
+    std::atomic<int> c;
     verify v;
     v.run<64, 128, 256, 512, 1024>();
-    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

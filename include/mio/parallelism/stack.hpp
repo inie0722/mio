@@ -1,64 +1,76 @@
 #pragma once
 
-#include "mio/parallelism/aba_ptr.hpp"
-#include "mio/parallelism/allocator.hpp"
+#include <atomic>
+#include <limits>
+#include <cstddef>
+#include <memory>
+
+#include <mio/parallelism/aba_ptr.hpp>
+#include <mio/parallelism/allocator.hpp>
 
 namespace mio
 {
     namespace parallelism
     {
-        template <typename T>
+        template <typename T, typename Allocator = std::allocator<T>>
         class stack
         {
+        public:
+            using value_type = T;
+            using size_type = std::size_t;
+
         private:
             struct node
             {
                 std::atomic<aba_ptr<node>> next;
-                T value;
+                value_type value;
             };
 
-            allocator<node> allocator_;
-            std::atomic<aba_ptr<node>> top_;
+            using allocator_type = typename mio::parallelism::allocator<node, typename std::allocator_traits<Allocator>::rebind_alloc<node>>;
+            using allocator_traits = std::allocator_traits<allocator_type>;
+
+            allocator_type alloc_;
+            std::atomic<aba_ptr<node>> top_ = aba_ptr<node>(nullptr);
 
         public:
-            stack()
-            {
-                top_ = nullptr;
-            }
+            stack() = default;
+
             ~stack()
             {
-                while (top_.load())
+                while (this->top_.load())
                 {
-                    aba_ptr<node> next = top_.load()->next;
-                    allocator_.deallocate(top_);
-                    top_ = next;
+                    aba_ptr<node> top = this->top_;
+                    aba_ptr<node> next = top->next;
+                    allocator_traits::destroy(this->alloc_, top.get());
+                    this->alloc_.deallocate(this->top_, 1);
+                    this->top_ = next;
                 }
             }
 
-            void push(const T &val)
+            void push(const value_type &val)
             {
-                aba_ptr<node> n = allocator_.allocate();
-                n->value = val;
+                aba_ptr<node> exp = this->top_;
+                aba_ptr<node> n = this->alloc_.allocate(1);
+                allocator_traits::construct(this->alloc_, n.get(), exp, val);
 
-                aba_ptr<node> exp = top_;
-                n->next = exp;
-
-                while (!top_.compare_exchange_weak(exp, n))
+                while (!this->top_.compare_exchange_weak(exp, n))
                 {
                     n->next = exp;
                 }
+                this->top_.notify_all();
             }
 
-            void pop(T &val)
+            void pop(value_type &val)
             {
-                aba_ptr<node> exp = top_;
+                aba_ptr<node> exp = this->top_;
                 aba_ptr<node> ret = exp;
 
-                while (!exp || !top_.compare_exchange_weak(exp, exp->next))
+                while (!exp || !this->top_.compare_exchange_weak(exp, exp->next))
                 {
                     while (!exp)
                     {
-                        exp = top_;
+                        this->top_.wait(exp);
+                        exp = this->top_;
                     }
 
                     ret = exp;
@@ -66,7 +78,23 @@ namespace mio
 
                 val = std::move(ret->value);
 
-                allocator_.deallocate(exp);
+                allocator_traits::destroy(this->alloc_, exp.get());
+                this->alloc_.deallocate(exp, 1);
+            }
+
+            bool empty() const
+            {
+                return this->top_ == nullptr;
+            }
+
+            bool is_lock_free() const
+            {
+                return this->top_.is_lock_free() && this->alloc_.is_lock_free();
+            }
+
+            size_type max_size() const
+            {
+                return std::numeric_limits<std::ptrdiff_t>::max();
             }
         };
 
