@@ -198,7 +198,7 @@ namespace std
             return ptr_.compare_exchange_strong(expected.ptr_, des, order);
         }
 
-        void wait(aba_ptr old, std::memory_order order = std::memory_order::seq_cst) const volatile noexcept
+        void wait(aba_ptr old, std::memory_order order = std::memory_order::seq_cst) noexcept
         {
             ptr_.wait(old.ptr_, order);
         }
