@@ -13,3 +13,7 @@ target_link_libraries(spsc_queue gtest pthread)
 add_executable(stack stack.cpp)
 
 target_link_libraries(stack gtest pthread)
+
+add_executable(queue queue.cpp)
+
+target_link_libraries(queue gtest pthread)

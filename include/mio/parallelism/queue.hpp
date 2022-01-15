@@ -7,9 +7,13 @@ namespace mio
 {
     namespace parallelism
     {
-        template <typename T>
+        template <typename T, typename Allocator = std::allocator<T>>
         class queue
         {
+        public:
+            using value_type = T;
+            using size_type = std::size_t;
+
         private:
             struct node
             {
@@ -17,40 +21,46 @@ namespace mio
                 T data;
             };
 
-            allocator<node> allocator_;
+            using allocator_type = typename mio::parallelism::allocator<node, typename std::allocator_traits<Allocator>::rebind_alloc<node>>;
+            using allocator_traits = std::allocator_traits<allocator_type>;
+
+            allocator_type alloc_;
             std::atomic<aba_ptr<node>> head_;
             std::atomic<aba_ptr<node>> tail_;
+            std::atomic<size_t> size_ = 0;
 
         public:
             queue()
             {
                 //先构造一个头节点
-                head_ = allocator_.allocate();
-                head_.load()->next = nullptr;
-                tail_ = head_.load();
+                aba_ptr<node> n = this->alloc_.allocate(1);
+                allocator_traits::construct(this->alloc_, n.get(), aba_ptr<node>(nullptr));
+                this->head_ = n;
+                this->tail_ = n;
             }
 
             ~queue()
             {
-                while (head_.load())
+                while (this->head_.load())
                 {
-                    aba_ptr<node> next = head_.load()->next;
-                    allocator_.deallocate(head_);
-                    head_ = next;
+                    aba_ptr<node> head = this->head_;
+                    aba_ptr<node> next = head->next;
+                    allocator_traits::destroy(this->alloc_, head.get());
+                    this->alloc_.deallocate(head, 1);
+                    this->head_ = next;
                 }
             }
 
             void push(const T &val)
             {
-                aba_ptr<node> n = allocator_.allocate();
-                n->data = val;
-                n->next = nullptr;
+                aba_ptr<node> n = this->alloc_.allocate(1);
+                allocator_traits::construct(this->alloc_, n.get(), aba_ptr<node>(nullptr), val);
 
                 while (1)
                 {
-                    aba_ptr<node> tail = tail_.load();
+                    aba_ptr<node> tail = this->tail_.load();
                     aba_ptr<node> next = tail->next.load();
-                    aba_ptr<node> tail2 = tail_.load();
+                    aba_ptr<node> tail2 = this->tail_.load();
 
                     if (tail == tail2)
                     {
@@ -58,13 +68,15 @@ namespace mio
                         {
                             if (tail->next.compare_exchange_weak(next, n))
                             {
-                                tail_.compare_exchange_strong(tail, n);
+                                this->tail_.compare_exchange_strong(tail, n);
+                                ++this->size_;
+                                this->size_.notify_all();
                                 return;
                             }
                         }
                         else
                         {
-                            tail_.compare_exchange_strong(tail, next);
+                            this->tail_.compare_exchange_strong(tail, next);
                         }
                     }
                 }
@@ -74,10 +86,11 @@ namespace mio
             {
                 while (1)
                 {
-                    aba_ptr<node> head = head_.load();
+                    this->size_.wait(0);
+                    aba_ptr<node> head = this->head_.load();
                     aba_ptr<node> next = head->next.load();
-                    aba_ptr<node> tail = tail_.load();
-                    aba_ptr<node> head2 = head_.load();
+                    aba_ptr<node> tail = this->tail_.load();
+                    aba_ptr<node> head2 = this->head_.load();
 
                     if (head == head2)
                     {
@@ -85,7 +98,7 @@ namespace mio
                         {
                             if (next == nullptr)
                                 continue;
-                            tail_.compare_exchange_strong(tail, next);
+                            this->tail_.compare_exchange_strong(tail, next);
                         }
                         else
                         {
@@ -93,14 +106,31 @@ namespace mio
                                 continue;
 
                             val = next->data;
-                            if (head_.compare_exchange_weak(head, next))
+                            if (this->head_.compare_exchange_weak(head, next))
                             {
-                                allocator_.deallocate(head);
+                                allocator_traits::destroy(this->alloc_, head.get());
+                                this->alloc_.deallocate(head, 1);
+                                --this->size_;
                                 return;
                             }
                         }
                     }
                 }
+            }
+
+            bool empty() const
+            {
+                return this->size_;
+            }
+
+            bool is_lock_free() const
+            {
+                return this->head_.is_lock_free() && this->tail_.is_lock_free() && this->alloc_.is_lock_free();
+            }
+
+            size_type max_size() const
+            {
+                return std::numeric_limits<std::ptrdiff_t>::max();
             }
         };
     } // namespace parallelism
