@@ -1,13 +1,12 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
 #include <atomic>
 #include <tuple>
 #include <list>
 #include <mutex>
+#include <semaphore>
 
-#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <fmt/format.h>
 
 #include <mio/chrono.hpp>
@@ -22,31 +21,35 @@ namespace mio
         {
             void (*fun)(void *ptr);
             void *ptr;
-            size_t size;
+            std::size_t size;
         };
 
-        class SPSC_buffer
+        class spsc_buffer
         {
         private:
             char data_[N];
-            alignas(128) std::atomic<uint64_t> writable_limit_ = 0;
-            alignas(128) std::atomic<uint64_t> readable_limit_ = 0;
+            std::atomic<std::size_t> writable_limit_ = 0;
+            std::atomic<std::size_t> readable_limit_ = 0;
 
         public:
-            message *alloc(size_t size)
+            message *alloc(std::size_t size)
             {
                 auto all_size = size + sizeof(message);
 
                 auto writable_limit = writable_limit_.load();
+                auto readable_limit = readable_limit_.load();
                 auto r = N - writable_limit % N;
 
-                message *ret = (message *)&data_[writable_limit % N];
+                message *ret = reinterpret_cast<message *>(&data_[writable_limit % N]);
                 all_size = r < all_size + sizeof(message) ? r + all_size + sizeof(message) : all_size;
-                void *ptr = r < all_size ? (void*)&data_[0] : (void*)&ret[1];
+                void *ptr = r < all_size ? static_cast<void *>(&data_[0]) : static_cast<void *>(&ret[1]);
 
                 //写满了等待 可写
-                while (N - (writable_limit - readable_limit_) < all_size)
-                    ;
+                while (N - (writable_limit - readable_limit) < all_size)
+                {
+                    readable_limit_.wait(readable_limit);
+                    readable_limit = readable_limit_.load();
+                }
 
                 ret->size = all_size;
                 ret->ptr = ptr;
@@ -71,30 +74,37 @@ namespace mio
             void pop(message *msg)
             {
                 this->readable_limit_ += msg->size;
+                this->readable_limit_.notify_one();
             }
         };
 
         inline static std::mutex mutex_;
-        inline static std::list<SPSC_buffer *> list_;
-        inline static boost::interprocess::interprocess_semaphore semaphore_{0};
-        SPSC_buffer buffer_;
-        typename std::list<SPSC_buffer *>::iterator iterator_;
+        inline static std::list<spsc_buffer *> list_;
+        inline static std::counting_semaphore semaphore_{0};
+        inline static std::atomic<bool> is_run_ = false;
+        inline static std::atomic<std::size_t> count_ = 0;
+
+        spsc_buffer buffer_;
+        typename std::list<spsc_buffer *>::iterator iterator_;
 
         template <typename Stream, typename Format, size_t... Index, typename... Args>
-        void operator()(Stream &stream, const Format &fmt, std::index_sequence<Index...>, const Args &...args)
+        void operator()(Stream &stream, Format &&fmt, std::index_sequence<Index...>, Args &&...args)
         {
-            using args_t = std::tuple<Stream &, Format, Args...>;
+            using args_t = std::tuple<Stream &, std::remove_reference_t<Format>, std::remove_reference_t<Args>...>;
 
             auto msg = buffer_.alloc(sizeof(args_t));
-            new (msg->ptr) args_t(stream, fmt, args...);
+            new (msg->ptr) args_t(stream, std::forward<Format>(fmt), std::forward<Args>(args)...);
             msg->fun = [](void *ptr)
             {
                 auto *args = reinterpret_cast<args_t *>(ptr);
-                std::get<0>(*args) << fmt::format(std::get<1>(*args), std::get<Index + 2>(*args)...);
+                std::get<size_t>(*args);
+                std::get<0>(*args) << fmt::vformat(std::get<1>(*args), fmt::make_format_args(std::get<Index + 2>(*args)...));
+                args->~args_t();
             };
 
             buffer_.push(msg);
-            semaphore_.post();
+            ++count_;
+            semaphore_.release();
         }
 
     public:
@@ -112,9 +122,9 @@ namespace mio
         }
 
         template <typename Stream, typename Format, typename... Args, typename Index = std::make_index_sequence<sizeof...(Args)>>
-        void operator()(Stream &stream, const Format &fmt, const Args &...args)
+        void operator()(Stream &stream, Format &&fmt, Args &&...args)
         {
-            this->operator()(stream, fmt, Index{}, args...);
+            this->operator()(stream, std::forward<Format>(fmt), Index{}, std::forward<Args>(args)...);
         }
 
         size_t size() const
@@ -122,52 +132,42 @@ namespace mio
             return buffer_.size();
         }
 
-        static void run_once()
+        static void run()
         {
-            semaphore_.wait();
-            std::lock_guard lock(mutex_);
-            for (size_t i = 0; i < list_.size(); i++)
+            is_run_ = true;
+            while (1)
             {
-                auto front = list_.front();
-                list_.pop_front();
-                if (front->size())
-                {
-                    auto msg = front->front();
-                    msg->fun(msg->ptr);
-                    front->pop(msg);
+                semaphore_.acquire();
 
-                    list_.push_back(front);
-                    break;
-                }
-                else
+                if (!is_run_)
+                    return;
+
+                std::lock_guard lock(mutex_);
+                for (size_t i = 0; i < list_.size(); i++)
                 {
-                    list_.push_back(front);
+                    auto buffer = list_.front();
+                    list_.pop_front();
+                    if (buffer->size())
+                    {
+                        auto msg = buffer->front();
+                        msg->fun(msg->ptr);
+                        buffer->pop(msg);
+                        --count_;
+                        list_.push_back(buffer);
+                        break;
+                    }
+                    else
+                    {
+                        list_.push_back(buffer);
+                    }
                 }
             }
         }
+
+        static void stop()
+        {
+            is_run_ = false;
+            semaphore_.release();
+        }
     };
 }
-
-template <typename Rep, typename Period>
-struct fmt::formatter<std::chrono::duration<Rep, Period>>
-{
-    constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin())
-    {
-        auto it = ctx.begin();
-        auto end = ctx.end();
-
-        if (it != end && it[0] == 't' && it[1] == 'm')
-            it += 2;
-
-        if (it != end && *it != '}')
-            throw format_error("invalid format");
-
-        return it;
-    }
-
-    template <typename FormatContext>
-    auto format(const std::chrono::duration<Rep, Period> &rtime, FormatContext &ctx) -> decltype(ctx.out())
-    {
-        return format_to(ctx.out(), "{}", mio::to_string(rtime));
-    }
-};
