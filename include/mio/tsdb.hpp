@@ -1,11 +1,9 @@
 #pragma once
 
 #include <atomic>
-#include <stdint.h>
-#include <type_traits>
+#include <cstdint>
 #include <fstream>
 #include <memory>
-#include <optional>
 #include <filesystem>
 
 #include <boost/interprocess/file_mapping.hpp>
@@ -30,6 +28,7 @@ namespace mio
             {
                 value_ = val;
                 is_write_ = true;
+                is_write_.notify_all();
                 return *this;
             }
 
@@ -65,15 +64,14 @@ namespace mio
 
             void wait() const
             {
-                while (!is_write_)
-                    ;
+                is_write_.wait(false);
             }
 
             value_type &value()
             {
                 if (!is_write_)
                 {
-                    throw std::bad_optional_access();
+                    throw std::runtime_error("bad row access");
                 }
 
                 return value_;
@@ -132,6 +130,7 @@ namespace mio
                 fbuf.sputc(0);
             }
 
+            //重新设置文件大小
             void recapacity()
             {
                 std::filesystem::resize_file(mmap_name_, sizeof(header) + header_->capacity * 2 * sizeof(row_type));
@@ -142,23 +141,24 @@ namespace mio
             void remmap()
             {
                 using namespace boost::interprocess;
+
                 region_->~mapped_region();
-                new (region_.get()) boost::interprocess::mapped_region(*file_mapp_, read_write);
+                new (region_.get()) mapped_region(*file_mapp_, read_write);
                 header_ = static_cast<header *>(region_->get_address());
 
                 row_ = (row_type *)((char *)region_->get_address() + sizeof(header));
-                this->capacity_ = get_region_capacity();
+                capacity_ = get_region_capacity();
             }
 
             //获取现在映射的内存的 capacity
             size_t get_region_capacity() const
             {
-                return (this->region_->get_size() - sizeof(header)) / sizeof(row_type);
+                return (region_->get_size() - sizeof(header)) / sizeof(row_type);
             }
 
             size_t do_push(const value_type &val, size_t index)
             {
-                if (index >= this->capacity_)
+                if (index >= capacity_)
                 {
                     auto flag = header_->lock.test_and_set();
 
@@ -166,11 +166,10 @@ namespace mio
                     {
                         recapacity();
                         header_->lock.clear();
+                        header_->capacity.notify_all();
                     }
 
-                    while (this->capacity_ == header_->capacity)
-                        ;
-
+                    header_->capacity.wait(capacity_);
                     remmap();
 
                     return do_push(val, index);
@@ -183,17 +182,17 @@ namespace mio
 
             row_type &do_read(size_t index)
             {
-                if (index >= this->capacity_)
+                if (index >= capacity_)
                 {
                     auto flag = header_->lock.test_and_set();
                     if (!flag)
                     {
                         recapacity();
                         header_->lock.clear();
+                        header_->capacity.notify_all();
                     }
 
-                    while (this->capacity_ == header_->capacity)
-                        ;
+                    header_->capacity.wait(capacity_);
 
                     remmap();
 
@@ -204,34 +203,35 @@ namespace mio
 
         public:
             table(const std::string &name, size_t capacity)
+                : mmap_name_(name)
             {
                 using namespace boost::interprocess;
 
-                mmap_name_ = name;
                 create_file(sizeof(header) + capacity * sizeof(row_type));
 
-                file_mapp_ = std::make_unique<boost::interprocess::file_mapping>(mmap_name_.c_str(), read_write);
-                region_ = std::make_unique<boost::interprocess::mapped_region>(*file_mapp_, read_write);
+                file_mapp_ = std::make_unique<file_mapping>(mmap_name_.c_str(), read_write);
+                region_ = std::make_unique<mapped_region>(*file_mapp_, read_write);
                 header_ = new (region_->get_address()) header;
-                row_ = reinterpret_cast<row_type *>((char *)region_->get_address() + sizeof(header));
+                row_ = reinterpret_cast<row_type *>(header_ + 1);
 
                 header_->size = 0;
                 header_->capacity = capacity;
                 header_->ref_cout = 1;
                 header_->lock.clear();
-                this->capacity_ = get_region_capacity();
+                capacity_ = get_region_capacity();
             }
 
             table(const std::string &name)
+                : mmap_name_(name)
             {
                 using namespace boost::interprocess;
-                mmap_name_ = name;
-                file_mapp_ = std::make_unique<boost::interprocess::file_mapping>(mmap_name_.c_str(), read_write);
-                region_ = std::make_unique<boost::interprocess::mapped_region>(*file_mapp_, read_write);
+
+                file_mapp_ = std::make_unique<file_mapping>(mmap_name_.c_str(), read_write);
+                region_ = std::make_unique<mapped_region>(*file_mapp_, read_write);
                 header_ = static_cast<header *>(region_->get_address());
-                row_ = (row_type *)((char *)region_->get_address() + sizeof(header));
+                row_ = reinterpret_cast<row_type *>(header_ + 1);
                 header_->ref_cout.fetch_add(1);
-                this->capacity_ = get_region_capacity();
+                capacity_ = get_region_capacity();
             }
 
             ~table()
