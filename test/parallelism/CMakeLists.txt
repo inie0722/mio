@@ -17,3 +17,7 @@ target_link_libraries(stack gtest pthread)
 add_executable(queue queue.cpp)
 
 target_link_libraries(queue gtest pthread)
+
+add_executable(ring_queue ring_queue.cpp)
+
+target_link_libraries(ring_queue gtest pthread)

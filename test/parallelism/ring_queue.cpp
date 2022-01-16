@@ -1,11 +1,12 @@
-#include "mio/parallelism/ring_queue.hpp"
-
 #include <assert.h>
 #include <stdint.h>
 
 #include <iostream>
 #include <memory>
 #include <thread>
+
+#include <gtest/gtest.h>
+#include <mio/parallelism/ring_queue.hpp>
 
 constexpr size_t SIZE = 10000;
 
@@ -34,7 +35,8 @@ public:
 
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
         {
-            write_thread[i] = std::thread([&]() {
+            write_thread[i] = std::thread([&]()
+                                          {
                 std::array<char, DATA_SIZE_> data;
 
                 auto start = std::chrono::steady_clock::now();
@@ -44,13 +46,13 @@ public:
                     ring_queue.push(data);
                 }
                 auto end = std::chrono::steady_clock::now();
-                write_diff = end - start;
-            });
+                write_diff = end - start; });
         }
 
         for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
-            read_thread[i] = std::thread([&]() {
+            read_thread[i] = std::thread([&]()
+                                         {
                 std::array<char, DATA_SIZE_> data;
 
                 auto start = std::chrono::steady_clock::now();
@@ -61,8 +63,7 @@ public:
                     array[index]++;
                 }
                 auto end = std::chrono::steady_clock::now();
-                read_diff = end - start;
-            });
+                read_diff = end - start; });
         }
 
         for (size_t i = 0; i < THREAD_WRITE_NUM; i++)
@@ -101,9 +102,15 @@ public:
     }
 };
 
-int main(void)
+TEST(ring_queue, ring_queue)
 {
+    std::atomic<int> c;
     verify v;
     v.run<64, 128, 256, 512, 1024>();
-    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

@@ -1,14 +1,7 @@
 #pragma once
-
-#include "mio/parallelism/detail/ring_buffer.hpp"
-#include "mio/parallelism/utility.hpp"
-
-#include <stddef.h>
-
 #include <atomic>
-#include <array>
-#include <utility>
-#include <algorithm>
+#include <cstddef>
+#include <memory>
 
 namespace mio
 {
@@ -17,87 +10,91 @@ namespace mio
         template <typename T, typename Allocator = std::allocator<T>>
         class ring_queue
         {
-        private:
-            using allocator_traits = std::allocator_traits<Allocator>;
-
         public:
-            using value_type = typename allocator_traits::value_type;
-
-            using allocator_type = typename allocator_traits::allocator_type;
-
-            using size_type = typename allocator_traits::size_type;
-
-            using reference = typename allocator_traits::value_type &;
-
-            using const_reference = const typename allocator_traits::value_type &;
-
-            using pointer = typename allocator_traits::pointer;
-
-            using const_pointer = typename allocator_traits::const_pointer;
+            using value_type = T;
+            using size_type = std::size_t;
 
         private:
-            size_type max_size_;
-            detail::ring_buffer<value_type, Allocator> buffer_;
+            struct node
+            {
+                std::atomic<size_type> readable_flag;
+                std::atomic<size_type> writable_flag;
+                value_type value;
+            };
 
-            //可读可写标志
-            detail::ring_buffer<std::atomic<size_type>, Allocator> readable_flag_;
-            detail::ring_buffer<std::atomic<size_type>, Allocator> writable_flag_;
+            using allocator_type = typename std::allocator_traits<Allocator>::rebind_alloc<node>;
+            using allocator_traits = std::allocator_traits<allocator_type>;
+            using pointer = allocator_traits::pointer;
+
+            allocator_type alloc_;
+            pointer data_;
+            size_type max_size_;
 
             //可读可写界限
-            alignas(CACHE_LINE) std::atomic<size_type> readable_limit_;
-            alignas(CACHE_LINE) std::atomic<size_type> writable_limit_;
+            std::atomic<size_type> readable_limit_ = 0;
+            std::atomic<size_type> writable_limit_ = 0;
+
+            size_type get_index(size_type index) const
+            {
+                return index % max_size_;
+            }
 
         public:
             ring_queue(size_type max_size)
-            :max_size_(max_size), buffer_(max_size), readable_flag_(max_size), writable_flag_(max_size), readable_limit_(0), writable_limit_(0)
+                : max_size_(max_size)
             {
+                this->data_ = this->alloc_.allocate(max_size);
                 for (size_t i = 0; i < max_size; i++)
                 {
-                    readable_flag_[i] = 0;
-                    writable_flag_[i] = 0;
+                    allocator_traits::construct(this->alloc_, this->data_, 0, 0);
                 }
             }
 
-            ring_queue(size_type max_size, const Allocator& alloc)
-            :max_size_(max_size), buffer_(max_size, alloc), readable_flag_(max_size, alloc), writable_flag_(max_size, alloc), readable_limit_(0), writable_limit_(0)
+            ~ring_queue()
             {
-
+                for (size_t i = 0; i < this->max_size_; i++)
+                {
+                    allocator_traits::destroy(this->alloc_, this->data_);
+                }
+                this->alloc_.deallocate(this->data_, this->max_size_);
             }
 
-            void push(const T &val, const wait::handler_t &handler = wait::yield)
-            {
-                size_t index = this->writable_limit_.fetch_add(1);
-
-                //等待可写
-                for (size_t i = 0; writable_flag_[index] != index / this->max_size(); i++)
-                    handler(i);
-
-                this->buffer_[index] = val;
-                readable_flag_[index] = (index / this->max_size()) + 1;
-            }
-
-            void push(T &&val, const wait::handler_t &handler = wait::yield)
+            void push(const T &val)
             {
                 size_t index = this->writable_limit_.fetch_add(1);
 
-                //等待可写
-                for (size_t i = 0; writable_flag_[index] != index / this->max_size(); i++)
-                    handler(i);
+                while (1)
+                {
+                    size_type writable_flag = this->data_[get_index(index)].writable_flag;
 
-                this->buffer_[index] = std::move(val);
-                readable_flag_[index] = (index / this->max_size()) + 1;
+                    if (writable_flag != index / this->max_size())
+                        this->data_[get_index(index)].writable_flag.wait(writable_flag);
+                    else
+                        break;
+                }
+
+                this->data_[get_index(index)].value = val;
+                this->data_[get_index(index)].readable_flag = (index / this->max_size()) + 1;
+                this->data_[get_index(index)].readable_flag.notify_one();
             }
 
-            void pop(T &val, const wait::handler_t &handler = wait::yield)
+            void pop(T &val)
             {
                 size_t index = this->readable_limit_.fetch_add(1);
 
-                //等待可读
-                for (size_t i = 0; readable_flag_[index] != (index / this->max_size()) + 1; i++)
-                    handler(i);
+                while (1)
+                {
+                    size_type readable_flag = this->data_[get_index(index)].readable_flag;
 
-                val = std::move(this->buffer_[index]);
-                writable_flag_[index] = (index / this->max_size()) + 1;
+                    if (readable_flag != (index / this->max_size()) + 1)
+                        this->data_[get_index(index)].readable_flag.wait(readable_flag);
+                    else
+                        break;
+                }
+
+                val = std::move(this->data_[get_index(index)].value);
+                this->data_[get_index(index)].writable_flag = (index / this->max_size()) + 1;
+                this->data_[get_index(index)].writable_flag.notify_one();
             }
 
             size_t size() const
@@ -120,7 +117,7 @@ namespace mio
 
             bool is_lock_free() const
             {
-                return true;
+                return readable_limit_.is_lock_free();
             }
         };
     } // namespace parallelism
