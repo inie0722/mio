@@ -1,4 +1,3 @@
-#include <boost/lockfree/queue.hpp>
 #include <assert.h>
 #include <stdint.h>
 
@@ -6,13 +5,16 @@
 #include <memory>
 #include <thread>
 
-constexpr size_t SIZE = 10000;
+#include <gtest/gtest.h>
+#include <boost/lockfree/queue.hpp>
 
-constexpr size_t BUF_SIZE = 4096;
+constexpr size_t SIZE = 100000;
 
-constexpr size_t THREAD_WRITE_NUM = 8;
+constexpr size_t BUF_SIZE = 0;
 
-constexpr size_t THREAD_READ_NUM = 8;
+constexpr size_t THREAD_WRITE_NUM = 4;
+
+constexpr size_t THREAD_READ_NUM = 4;
 
 class verify
 {
@@ -50,7 +52,7 @@ public:
         for (size_t i = 0; i < THREAD_READ_NUM; i++)
         {
             read_thread[i] = std::thread([&]() {
-                std::array<char, DATA_SIZE_> data;
+                std::array<char, DATA_SIZE_> data = {};
 
                 auto start = std::chrono::steady_clock::now();
                 for (size_t i = 0; i < SIZE; i++)
@@ -100,9 +102,15 @@ public:
     }
 };
 
-int main(void)
+TEST(ring_queue, ring_queue)
 {
+    std::atomic<int> c;
     verify v;
     v.run<64, 128, 256, 512, 1024>();
-    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

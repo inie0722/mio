@@ -21,3 +21,7 @@ target_link_libraries(queue gtest pthread)
 add_executable(ring_queue ring_queue.cpp)
 
 target_link_libraries(ring_queue gtest pthread)
+
+add_executable(boost_queue boost_queue.cpp)
+
+target_link_libraries(boost_queue gtest pthread)
