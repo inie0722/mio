@@ -146,8 +146,8 @@ namespace mio
                 new (region_.get()) mapped_region(*file_mapp_, read_write);
                 header_ = static_cast<header *>(region_->get_address());
 
-                row_ = (row_type *)((char *)region_->get_address() + sizeof(header));
-                capacity_ = get_region_capacity();
+                row_ = reinterpret_cast<row_type *>(header_ + 1);
+                capacity_ = this->get_region_capacity();
             }
 
             //获取现在映射的内存的 capacity
@@ -164,15 +164,15 @@ namespace mio
 
                     if (!flag)
                     {
-                        recapacity();
+                        this->recapacity();
                         header_->lock.clear();
                         header_->capacity.notify_all();
                     }
 
                     header_->capacity.wait(capacity_);
-                    remmap();
+                    this->remmap();
 
-                    return do_push(val, index);
+                    return this->do_push(val, index);
                 }
 
                 row_[index] = val;
@@ -187,16 +187,16 @@ namespace mio
                     auto flag = header_->lock.test_and_set();
                     if (!flag)
                     {
-                        recapacity();
+                        this->recapacity();
                         header_->lock.clear();
                         header_->capacity.notify_all();
                     }
 
                     header_->capacity.wait(capacity_);
 
-                    remmap();
+                    this->remmap();
 
-                    return do_read(index);
+                    return this->do_read(index);
                 }
                 return row_[index];
             }
@@ -207,7 +207,7 @@ namespace mio
             {
                 using namespace boost::interprocess;
 
-                create_file(sizeof(header) + capacity * sizeof(row_type));
+                this->create_file(sizeof(header) + capacity * sizeof(row_type));
 
                 file_mapp_ = std::make_unique<file_mapping>(mmap_name_.c_str(), read_write);
                 region_ = std::make_unique<mapped_region>(*file_mapp_, read_write);
@@ -218,7 +218,7 @@ namespace mio
                 header_->capacity = capacity;
                 header_->ref_cout = 1;
                 header_->lock.clear();
-                capacity_ = get_region_capacity();
+                capacity_ = this->get_region_capacity();
             }
 
             table(const std::string &name)
@@ -231,7 +231,7 @@ namespace mio
                 header_ = static_cast<header *>(region_->get_address());
                 row_ = reinterpret_cast<row_type *>(header_ + 1);
                 header_->ref_cout.fetch_add(1);
-                capacity_ = get_region_capacity();
+                capacity_ = this->get_region_capacity();
             }
 
             ~table()
@@ -242,12 +242,12 @@ namespace mio
             size_t push(const value_type &val)
             {
                 auto index = header_->size.fetch_add(1);
-                return do_push(val, index);
+                return this->do_push(val, index);
             }
 
             row_type &operator[](size_t index)
             {
-                return do_read(index);
+                return this->do_read(index);
             }
 
             const row_type &operator[](size_t index) const
