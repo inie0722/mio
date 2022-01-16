@@ -5,8 +5,9 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 
+#include <cstdint>
 #include <variant>
-#include <iostream>
+#include <memory>
 
 namespace mio
 {
@@ -98,40 +99,3 @@ namespace mio
         };
     } // namespace interprocess
 } // namespace mio
-
-namespace std
-{
-    template <typename T>
-    class allocator_traits<mio::interprocess::allocator<T>>
-    {
-    public:
-        using allocator_type = mio::interprocess::allocator<T>;
-
-        using value_type = typename allocator_type::value_type;
-
-        using pointer = typename allocator_type::pointer;
-
-        using const_pointer = typename allocator_type::const_pointer;
-
-        using void_pointer = typename allocator_type::void_pointer;
-
-        using const_void_pointer = const typename allocator_type::void_pointer;
-
-        using difference_type = typename allocator_type::difference_type;
-
-        using size_type = typename allocator_type::size_type;
-
-        template <typename T_>
-        using rebind_traits = allocator_traits<mio::interprocess::allocator<T_>>;
-
-        inline static pointer allocate(allocator_type &alloc, size_type n)
-        {
-            return alloc.allocate(n);
-        }
-
-        inline static void deallocate(allocator_type &alloc, pointer p, size_type n)
-        {
-            alloc.deallocate(p, n);
-        }
-    };
-} // namespace std
