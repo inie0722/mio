@@ -1,5 +1,3 @@
-#include <boost/lockfree/spsc_queue.hpp>
-
 #include <assert.h>
 #include <stdint.h>
 
@@ -7,7 +5,10 @@
 #include <memory>
 #include <thread>
 
-constexpr size_t SIZE = 10000 * 8;
+#include <gtest/gtest.h>
+#include <boost/lockfree/spsc_queue.hpp>
+
+constexpr size_t SIZE = 100000;
 
 constexpr size_t BUF_SIZE = 4096;
 
@@ -106,9 +107,14 @@ public:
     }
 };
 
-int main(void)
+TEST(boost_spsc_queue, boost_spsc_queue)
 {
     verify v;
     v.run<64, 128, 256, 512, 1024>();
-    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
