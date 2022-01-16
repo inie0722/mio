@@ -1,4 +1,5 @@
 #pragma once
+
 #include <atomic>
 #include <cstddef>
 #include <memory>
@@ -46,7 +47,7 @@ namespace mio
                 this->data_ = this->alloc_.allocate(max_size);
                 for (size_t i = 0; i < max_size; i++)
                 {
-                    allocator_traits::construct(this->alloc_, this->data_, 0, 0);
+                    allocator_traits::construct(this->alloc_, &this->data_[i], 0, i);
                 }
             }
 
@@ -67,14 +68,14 @@ namespace mio
                 {
                     size_type writable_flag = this->data_[get_index(index)].writable_flag;
 
-                    if (writable_flag != index / this->max_size())
+                    if (writable_flag != index)
                         this->data_[get_index(index)].writable_flag.wait(writable_flag);
                     else
                         break;
                 }
 
                 this->data_[get_index(index)].value = val;
-                this->data_[get_index(index)].readable_flag = (index / this->max_size()) + 1;
+                this->data_[get_index(index)].readable_flag = index + 1;
                 this->data_[get_index(index)].readable_flag.notify_one();
             }
 
@@ -86,14 +87,14 @@ namespace mio
                 {
                     size_type readable_flag = this->data_[get_index(index)].readable_flag;
 
-                    if (readable_flag != (index / this->max_size()) + 1)
+                    if (readable_flag != index + 1)
                         this->data_[get_index(index)].readable_flag.wait(readable_flag);
                     else
                         break;
                 }
 
                 val = std::move(this->data_[get_index(index)].value);
-                this->data_[get_index(index)].writable_flag = (index / this->max_size()) + 1;
+                this->data_[get_index(index)].writable_flag = index + this->max_size();
                 this->data_[get_index(index)].writable_flag.notify_one();
             }
 
