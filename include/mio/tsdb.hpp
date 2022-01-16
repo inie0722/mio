@@ -106,9 +106,9 @@ namespace mio
         private:
             struct header
             {
-                std::atomic<uint64_t> size;
-                std::atomic<uint64_t> capacity;
-                std::atomic<uint64_t> ref_cout;
+                std::atomic<std::uint64_t> size;
+                std::atomic<std::uint64_t> capacity;
+                std::atomic<std::uint64_t> ref_cout;
                 std::atomic_flag lock;
             };
 
@@ -120,7 +120,7 @@ namespace mio
             row_type *row_;
 
             //本地 capacity
-            uint64_t capacity_;
+            std::uint64_t capacity_;
 
             void create_file(size_t size)
             {
