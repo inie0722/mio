@@ -50,6 +50,18 @@ namespace mio
 
             return ret;
         }
+
+        class stopwatch
+        {
+        private:
+            std::chrono::nanoseconds start_ = mio::chrono::now();
+
+        public:
+            std::chrono::nanoseconds operator()() const
+            {
+                return mio::chrono::now() - this->start_;
+            }
+        };
     } // namespace chrono
 
     template <typename Rep, typename Period>
