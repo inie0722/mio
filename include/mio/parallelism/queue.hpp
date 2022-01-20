@@ -88,8 +88,8 @@ namespace mio
                 {
                     this->size_.wait(0);
                     aba_ptr<node> head = this->head_.load();
-                    aba_ptr<node> next = head->next.load();
                     aba_ptr<node> tail = this->tail_.load();
+                    aba_ptr<node> next = head->next.load();
                     aba_ptr<node> head2 = this->head_.load();
 
                     if (head == head2)

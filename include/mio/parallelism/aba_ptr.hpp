@@ -139,7 +139,7 @@ namespace std
 
         atomic(const aba_ptr &desired) noexcept
         {
-            this->ptr_ = desired.ptr_;
+            store(desired);
         }
 
         aba_ptr operator=(const aba_ptr &desired) volatile noexcept
