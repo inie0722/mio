@@ -13,14 +13,14 @@ namespace mio
 {
     namespace tsdb
     {
-        template <typename T>
+        template <typename T, template <typename> typename Atomic = std::atomic>
         class row
         {
         public:
             using value_type = T;
 
         private:
-            std::atomic<bool> is_write_;
+            Atomic<bool> is_write_;
             value_type value_;
 
         public:
@@ -96,20 +96,20 @@ namespace mio
             }
         };
 
-        template <typename T>
+        template <typename T, template <typename> typename Atomic = std::atomic>
         class table
         {
         public:
             using value_type = T;
-            using row_type = row<value_type>;
+            using row_type = row<value_type, Atomic>;
 
         private:
             struct header
             {
-                std::atomic<std::uint64_t> size;
-                std::atomic<std::uint64_t> capacity;
-                std::atomic<std::uint64_t> ref_cout;
-                std::atomic_flag lock;
+                Atomic<std::uint64_t> size;
+                Atomic<std::uint64_t> capacity;
+                Atomic<std::uint64_t> ref_cout;
+                Atomic<bool> lock;
             };
 
             std::string mmap_name_;
@@ -160,12 +160,12 @@ namespace mio
             {
                 if (index >= capacity_)
                 {
-                    auto flag = header_->lock.test_and_set();
+                    auto flag = header_->lock.exchange(true);
 
                     if (!flag)
                     {
                         this->recapacity();
-                        header_->lock.clear();
+                        header_->lock = false;
                         header_->capacity.notify_all();
                     }
 
@@ -184,11 +184,11 @@ namespace mio
             {
                 if (index >= capacity_)
                 {
-                    auto flag = header_->lock.test_and_set();
+                    auto flag = header_->lock.exchange(true);
                     if (!flag)
                     {
                         this->recapacity();
-                        header_->lock.clear();
+                        header_->lock = false;
                         header_->capacity.notify_all();
                     }
 
@@ -217,7 +217,7 @@ namespace mio
                 header_->size = 0;
                 header_->capacity = capacity;
                 header_->ref_cout = 1;
-                header_->lock.clear();
+                header_->lock = false;
                 capacity_ = this->get_region_capacity();
             }
 
