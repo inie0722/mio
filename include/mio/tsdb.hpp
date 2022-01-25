@@ -273,7 +273,7 @@ namespace mio
             void shrink_to_fit()
             {
                 std::filesystem::resize_file(mmap_name_, sizeof(header) + header_->size * sizeof(row_type));
-                header_->capacity = header_->size;
+                header_->capacity = header_->size.load();
             }
         };
     }
