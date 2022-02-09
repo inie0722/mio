@@ -71,19 +71,14 @@ namespace mio
         using namespace std::chrono;
         using namespace std::chrono_literals;
 
-        unsigned long long ms = (unsigned long long)(rtime % 1s / 1ms);
-        unsigned long long us = (unsigned long long)(rtime % 1ms / 1us);
-        unsigned long long ns = (unsigned long long)(rtime % 1us / 1ns);
+        std::chrono::nanoseconds ns = rtime % 1s;
 
         std::stringstream ss;
         std::chrono::time_point<std::chrono::system_clock> tt(std::chrono::duration_cast<std::chrono::milliseconds>(rtime));
         auto t = std::chrono::system_clock::to_time_t(tt);
-        ss << std::put_time(std::localtime(&t), "%F %T ");
+        ss << std::put_time(std::localtime(&t), "%F %T.");
 
-        char buf[128];
-        sprintf(buf, "%03llu:%03llu:%03llu", ms, us, ns);
-
-        ss << buf;
+        ss << ns.count();
         return ss.str();
     }
 } // namespace mio
