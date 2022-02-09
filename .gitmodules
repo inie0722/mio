@@ -1,6 +1,6 @@
 [submodule "fmt"]
 	path = fmt
-	url = https://github.com.cnpmjs.org/fmtlib/fmt
+	url = https://github.com/fmtlib/fmt
 [submodule "parallel-hashmap"]
 	path = parallel-hashmap
-	url = https://github.com.cnpmjs.org/greg7mdp/parallel-hashmap
+	url = https://github.com/greg7mdp/parallel-hashmap
