@@ -28,7 +28,7 @@ namespace mio
         }
 
         template <typename Stream>
-        Json::Value csv_load(Stream &&stream, const std::string &index)
+        Json::Value csv_load(Stream &&stream, const std::optional<std::string> &index)
         {
             std::string line;
             std::getline(stream, line);
@@ -36,8 +36,12 @@ namespace mio
             std::vector<std::string> head;
             boost::split(head, line, boost::is_any_of(","));
 
-            size_t ind = std::find(head.begin(), head.end(), index) - head.begin();
             Json::Value value;
+
+            size_t ind;
+            if (index != std::nullopt)
+                ind = std::find(head.begin(), head.end(), *index) - head.begin();
+
             for (int i = 0; std::getline(stream, line); i++)
             {
                 std::vector<std::string> ve;
@@ -45,28 +49,47 @@ namespace mio
 
                 for (int ii = 0; ii < head.size(); ii++)
                 {
-                    value[head[ii]][ve[ind]] = ve[ii];
+                    if (index != std::nullopt)
+                        value[head[ii]][ve[ind]] = ve[ii];
+                    else
+                        value[head[ii]][i] = ve[ii];
                 }
             }
 
             return value;
         }
 
-        std::string csv_dump(const Json::Value &value, const std::vector<std::string> head)
+        std::string csv_dump(const Json::Value &value, const std::vector<std::string> &head, const std::optional<std::string> &index)
         {
             std::string ret;
             ret += boost::algorithm::join(head, ",") + "\n";
 
-            size_t size = value[head[0]].size();
-            for (auto &i : value[head[0]].getMemberNames())
+            if (index != std::nullopt)
             {
-                for (auto &ii : head)
+                for (auto &i : value[*index].getMemberNames())
                 {
-                    ret += value[ii][i].asString() + ",";
-                }
+                    for (auto &ii : head)
+                    {
+                        ret += value[ii][i].asString() + ",";
+                    }
 
-                ret.back() = '\n';
+                    ret.back() = '\n';
+                }
             }
+            else
+            {
+                int size = value[head[0]].size();
+                for (int i = 0; i < size; i++)
+                {
+                    for (auto &ii : head)
+                    {
+                        ret += value[ii][i].asString() + ",";
+                    }
+
+                    ret.back() = '\n';
+                }
+            }
+
             return ret;
         }
     }
