@@ -29,7 +29,7 @@ namespace mio
 
             tm tm_;
             strptime(strs[0].c_str(), "%Y-%m-%d %H:%M:%S", &tm_);
-            return std::chrono::nanoseconds(std::chrono::seconds(mktime(&tm_))) + std::chrono::nanoseconds(std::stoull(strs[1], nullptr, 0));
+            return std::chrono::nanoseconds(std::chrono::seconds(mktime(&tm_))) + std::chrono::nanoseconds(std::stoull(strs[1]));
         }
 
         class stopwatch
