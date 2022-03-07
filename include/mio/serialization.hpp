@@ -1,6 +1,6 @@
 /**
  * @file serialization.hpp
- * @author 然Y (you@domain.com)
+ * @author 然Y (inie0722@gmail.com)
  * @brief
  * @version 0.1
  * @date 2022-03-07
