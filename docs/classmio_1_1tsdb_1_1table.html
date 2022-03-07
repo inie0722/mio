@@ -1,0 +1,492 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.17"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>mio: mio::tsdb::table&lt; T, Atomic &gt; 模板类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">mio
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.8.17 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'搜索');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><b>mio</b></li><li class="navelem"><a class="el" href="namespacemio_1_1tsdb.html">tsdb</a></li><li class="navelem"><a class="el" href="classmio_1_1tsdb_1_1table.html">table</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">类</a> &#124;
+<a href="#pub-types">Public 类型</a> &#124;
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="classmio_1_1tsdb_1_1table-members.html">所有成员列表</a>  </div>
+  <div class="headertitle">
+<div class="title">mio::tsdb::table&lt; T, Atomic &gt; 模板类 参考</div>  </div>
+</div><!--header-->
+<div class="contents">
+
+<p>表  
+ <a href="classmio_1_1tsdb_1_1table.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="tsdb_8hpp_source.html">tsdb.hpp</a>&gt;</code></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public 类型</h2></td></tr>
+<tr class="memitem:a2bcfd0dbe28aea575a193a6973d4fbbc"><td class="memItemLeft" align="right" valign="top"><a id="a2bcfd0dbe28aea575a193a6973d4fbbc"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = T</td></tr>
+<tr class="separator:a2bcfd0dbe28aea575a193a6973d4fbbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79b5fbbae96c04c859df7028d0b9111f"><td class="memItemLeft" align="right" valign="top"><a id="a79b5fbbae96c04c859df7028d0b9111f"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>row_type</b> = <a class="el" href="classmio_1_1tsdb_1_1row.html">row</a>&lt; value_type, Atomic &gt;</td></tr>
+<tr class="separator:a79b5fbbae96c04c859df7028d0b9111f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a37b083bba872997106f5e347869d2f13"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a37b083bba872997106f5e347869d2f13">table</a> (const std::string &amp;name, size_t <a class="el" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a>)</td></tr>
+<tr class="memdesc:a37b083bba872997106f5e347869d2f13"><td class="mdescLeft">&#160;</td><td class="mdescRight">创建一个 table  <a href="classmio_1_1tsdb_1_1table.html#a37b083bba872997106f5e347869d2f13">更多...</a><br /></td></tr>
+<tr class="separator:a37b083bba872997106f5e347869d2f13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a518795dda670c5d4160bbae4cf9d77ba"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a518795dda670c5d4160bbae4cf9d77ba">table</a> (const std::string &amp;name)</td></tr>
+<tr class="memdesc:a518795dda670c5d4160bbae4cf9d77ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">打开一个已存在的 table  <a href="classmio_1_1tsdb_1_1table.html#a518795dda670c5d4160bbae4cf9d77ba">更多...</a><br /></td></tr>
+<tr class="separator:a518795dda670c5d4160bbae4cf9d77ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaa0bb978b8d25bba582b85b53605514"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#aeaa0bb978b8d25bba582b85b53605514">~table</a> ()</td></tr>
+<tr class="memdesc:aeaa0bb978b8d25bba582b85b53605514"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构 table  <a href="classmio_1_1tsdb_1_1table.html#aeaa0bb978b8d25bba582b85b53605514">更多...</a><br /></td></tr>
+<tr class="separator:aeaa0bb978b8d25bba582b85b53605514"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a576a4c5c649f1a3ba5daac3cc7002ec4"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a576a4c5c649f1a3ba5daac3cc7002ec4">push</a> (const value_type &amp;val)</td></tr>
+<tr class="memdesc:a576a4c5c649f1a3ba5daac3cc7002ec4"><td class="mdescLeft">&#160;</td><td class="mdescRight">在最后一行写入数据  <a href="classmio_1_1tsdb_1_1table.html#a576a4c5c649f1a3ba5daac3cc7002ec4">更多...</a><br /></td></tr>
+<tr class="separator:a576a4c5c649f1a3ba5daac3cc7002ec4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a070d723a14f4bdd44eb3650776f86c6d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmio_1_1tsdb_1_1row.html">row_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a070d723a14f4bdd44eb3650776f86c6d">operator[]</a> (size_t index)</td></tr>
+<tr class="memdesc:a070d723a14f4bdd44eb3650776f86c6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">访问行  <a href="classmio_1_1tsdb_1_1table.html#a070d723a14f4bdd44eb3650776f86c6d">更多...</a><br /></td></tr>
+<tr class="separator:a070d723a14f4bdd44eb3650776f86c6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a357fdcabb7c93874d6a9eca56be6aff2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classmio_1_1tsdb_1_1row.html">row_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a357fdcabb7c93874d6a9eca56be6aff2">operator[]</a> (size_t index) const</td></tr>
+<tr class="memdesc:a357fdcabb7c93874d6a9eca56be6aff2"><td class="mdescLeft">&#160;</td><td class="mdescRight">访问行  <a href="classmio_1_1tsdb_1_1table.html#a357fdcabb7c93874d6a9eca56be6aff2">更多...</a><br /></td></tr>
+<tr class="separator:a357fdcabb7c93874d6a9eca56be6aff2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc72f16f1c28888b9306959b117c1ab0"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">size</a> () const</td></tr>
+<tr class="memdesc:afc72f16f1c28888b9306959b117c1ab0"><td class="mdescLeft">&#160;</td><td class="mdescRight">返回行数  <a href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">更多...</a><br /></td></tr>
+<tr class="separator:afc72f16f1c28888b9306959b117c1ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac360c176d7266893633c6e9f9868c1a7"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a> () const</td></tr>
+<tr class="memdesc:ac360c176d7266893633c6e9f9868c1a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">返回当前存储空间能够容纳的行数  <a href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">更多...</a><br /></td></tr>
+<tr class="separator:ac360c176d7266893633c6e9f9868c1a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1edbd71c92263afdca06a434f16161f3"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a1edbd71c92263afdca06a434f16161f3">ref_cout</a> () const</td></tr>
+<tr class="memdesc:a1edbd71c92263afdca06a434f16161f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">返回当前table打开次数  <a href="classmio_1_1tsdb_1_1table.html#a1edbd71c92263afdca06a434f16161f3">更多...</a><br /></td></tr>
+<tr class="separator:a1edbd71c92263afdca06a434f16161f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30f6b4ddf83bdc617cd3c31c5f73f69d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmio_1_1tsdb_1_1table.html#a30f6b4ddf83bdc617cd3c31c5f73f69d">shrink_to_fit</a> ()</td></tr>
+<tr class="memdesc:a30f6b4ddf83bdc617cd3c31c5f73f69d"><td class="mdescLeft">&#160;</td><td class="mdescRight">紧缩table 使capacity等于size  <a href="classmio_1_1tsdb_1_1table.html#a30f6b4ddf83bdc617cd3c31c5f73f69d">更多...</a><br /></td></tr>
+<tr class="separator:a30f6b4ddf83bdc617cd3c31c5f73f69d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><h3>template&lt;typename T, template&lt; typename &gt; typename Atomic = std::atomic&gt;<br />
+class mio::tsdb::table&lt; T, Atomic &gt;</h3>
+
+<p>表 </p>
+<p>每个表包括N个行 </p><dl class="tparams"><dt>模板参数</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>存储类型 </td></tr>
+    <tr><td class="paramname">Atomic</td><td>atomic类型 默认才用std 如果需要进程间使用，则需要改为 boost::ipc_atomic </td></tr>
+  </table>
+  </dd>
+</dl>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a37b083bba872997106f5e347869d2f13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37b083bba872997106f5e347869d2f13">&#9670;&nbsp;</a></span>table() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::<a class="el" href="classmio_1_1tsdb_1_1table.html">table</a> </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>capacity</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>创建一个 table </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>文件名 </td></tr>
+    <tr><td class="paramname">capacity</td><td>初始缓存大小 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a518795dda670c5d4160bbae4cf9d77ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a518795dda670c5d4160bbae4cf9d77ba">&#9670;&nbsp;</a></span>table() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::<a class="el" href="classmio_1_1tsdb_1_1table.html">table</a> </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>打开一个已存在的 table </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>文件名 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aeaa0bb978b8d25bba582b85b53605514"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaa0bb978b8d25bba582b85b53605514">&#9670;&nbsp;</a></span>~table()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::~<a class="el" href="classmio_1_1tsdb_1_1table.html">table</a> </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构 table </p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="ac360c176d7266893633c6e9f9868c1a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac360c176d7266893633c6e9f9868c1a7">&#9670;&nbsp;</a></span>capacity()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::capacity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>返回当前存储空间能够容纳的行数 </p>
+<dl class="section return"><dt>返回</dt><dd>size_t </dd></dl>
+
+</div>
+</div>
+<a id="a070d723a14f4bdd44eb3650776f86c6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a070d723a14f4bdd44eb3650776f86c6d">&#9670;&nbsp;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmio_1_1tsdb_1_1row.html">row_type</a>&amp; <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::operator[] </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>访问行 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>row_type&amp; </dd></dl>
+
+</div>
+</div>
+<a id="a357fdcabb7c93874d6a9eca56be6aff2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a357fdcabb7c93874d6a9eca56be6aff2">&#9670;&nbsp;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classmio_1_1tsdb_1_1row.html">row_type</a>&amp; <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::operator[] </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>访问行 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>const row_type&amp; </dd></dl>
+
+</div>
+</div>
+<a id="a576a4c5c649f1a3ba5daac3cc7002ec4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a576a4c5c649f1a3ba5daac3cc7002ec4">&#9670;&nbsp;</a></span>push()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::push </td>
+          <td>(</td>
+          <td class="paramtype">const value_type &amp;&#160;</td>
+          <td class="paramname"><em>val</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>在最后一行写入数据 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">val</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>size_t 表的总大小 </dd></dl>
+
+</div>
+</div>
+<a id="a1edbd71c92263afdca06a434f16161f3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1edbd71c92263afdca06a434f16161f3">&#9670;&nbsp;</a></span>ref_cout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::ref_cout </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>返回当前table打开次数 </p>
+<dl class="section return"><dt>返回</dt><dd>size_t </dd></dl>
+
+</div>
+</div>
+<a id="a30f6b4ddf83bdc617cd3c31c5f73f69d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30f6b4ddf83bdc617cd3c31c5f73f69d">&#9670;&nbsp;</a></span>shrink_to_fit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::shrink_to_fit </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>紧缩table 使capacity等于size </p>
+
+</div>
+</div>
+<a id="afc72f16f1c28888b9306959b117c1ab0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc72f16f1c28888b9306959b117c1ab0">&#9670;&nbsp;</a></span>size()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; typename &gt; typename Atomic = std::atomic&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t <a class="el" href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a>&lt; T, Atomic &gt;::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>返回行数 </p>
+<dl class="section return"><dt>返回</dt><dd>size_t </dd></dl>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li><a class="el" href="tsdb_8hpp_source.html">tsdb.hpp</a></li>
+</ul>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者 &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.17
+</small></address>
+</body>
+</html>

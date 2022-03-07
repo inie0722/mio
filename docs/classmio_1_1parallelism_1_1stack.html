@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.17"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>mio: mio::parallelism::stack&lt; T, Allocator &gt; 模板类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">mio
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.8.17 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'搜索');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><b>mio</b></li><li class="navelem"><a class="el" href="namespacemio_1_1parallelism.html">parallelism</a></li><li class="navelem"><a class="el" href="classmio_1_1parallelism_1_1stack.html">stack</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">类</a> &#124;
+<a href="#pub-types">Public 类型</a> &#124;
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="classmio_1_1parallelism_1_1stack-members.html">所有成员列表</a>  </div>
+  <div class="headertitle">
+<div class="title">mio::parallelism::stack&lt; T, Allocator &gt; 模板类 参考</div>  </div>
+</div><!--header-->
+<div class="contents">
+
+<p>无锁无界栈  
+ <a href="classmio_1_1parallelism_1_1stack.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="stack_8hpp_source.html">stack.hpp</a>&gt;</code></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public 类型</h2></td></tr>
+<tr class="memitem:a3f94d39cf8a526ee051db41f4e4b47e0"><td class="memItemLeft" align="right" valign="top"><a id="a3f94d39cf8a526ee051db41f4e4b47e0"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = T</td></tr>
+<tr class="separator:a3f94d39cf8a526ee051db41f4e4b47e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0c5ca124165056e99c9ca0f76a29fa6"><td class="memItemLeft" align="right" valign="top"><a id="aa0c5ca124165056e99c9ca0f76a29fa6"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = std::size_t</td></tr>
+<tr class="separator:aa0c5ca124165056e99c9ca0f76a29fa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a91e4fdda9a6254242c198cffff89931a"><td class="memItemLeft" align="right" valign="top"><a id="a91e4fdda9a6254242c198cffff89931a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>push</b> (const value_type &amp;val)</td></tr>
+<tr class="separator:a91e4fdda9a6254242c198cffff89931a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92d891d2cc2a5f363594e0b1aa1459dc"><td class="memItemLeft" align="right" valign="top"><a id="a92d891d2cc2a5f363594e0b1aa1459dc"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>pop</b> (value_type &amp;val)</td></tr>
+<tr class="separator:a92d891d2cc2a5f363594e0b1aa1459dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc2819fbc7b3722b41d284fa0fdb4208"><td class="memItemLeft" align="right" valign="top"><a id="abc2819fbc7b3722b41d284fa0fdb4208"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>empty</b> () const</td></tr>
+<tr class="separator:abc2819fbc7b3722b41d284fa0fdb4208"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6eda74a5465740e5b481139ef73631c7"><td class="memItemLeft" align="right" valign="top"><a id="a6eda74a5465740e5b481139ef73631c7"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_lock_free</b> () const</td></tr>
+<tr class="separator:a6eda74a5465740e5b481139ef73631c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae057d528cc8609aedfb3a0113c47c3c9"><td class="memItemLeft" align="right" valign="top"><a id="ae057d528cc8609aedfb3a0113c47c3c9"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><b>max_size</b> () const</td></tr>
+<tr class="separator:ae057d528cc8609aedfb3a0113c47c3c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><h3>template&lt;typename T, typename Allocator = std::allocator&lt;T&gt;&gt;<br />
+class mio::parallelism::stack&lt; T, Allocator &gt;</h3>
+
+<p>无锁无界栈 </p>
+<dl class="tparams"><dt>模板参数</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td></td></tr>
+    <tr><td class="paramname">Allocator</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+</div><hr/>该类的文档由以下文件生成:<ul>
+<li>parallelism/<a class="el" href="stack_8hpp_source.html">stack.hpp</a></li>
+</ul>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者 &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.17
+</small></address>
+</body>
+</html>

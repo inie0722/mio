@@ -1,0 +1,375 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.17"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>mio: tsdb.hpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">mio
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.8.17 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'搜索');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div class="header">
+  <div class="headertitle">
+<div class="title">tsdb.hpp</div>  </div>
+</div><!--header-->
+<div class="contents">
+<a href="tsdb_8hpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160; </div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor">#pragma once</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160; </div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#include &lt;atomic&gt;</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#include &lt;cstdint&gt;</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#include &lt;fstream&gt;</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor">#include &lt;filesystem&gt;</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160; </div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor">#include &lt;boost/interprocess/file_mapping.hpp&gt;</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor">#include &lt;boost/interprocess/mapped_region.hpp&gt;</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160; </div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="keyword">namespace </span>mio</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;{</div>
+<div class="line"><a name="l00028"></a><span class="lineno"><a class="line" href="namespacemio_1_1tsdb.html">   28</a></span>&#160;    <span class="keyword">namespace </span>tsdb</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    {</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">template</span> &lt;<span class="keyword">typename</span>&gt; <span class="keyword">typename</span> Atomic = std::atomic&gt;</div>
+<div class="line"><a name="l00037"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html">   37</a></span>&#160;        <span class="keyword">class </span><a class="code" href="classmio_1_1tsdb_1_1row.html">row</a></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        {</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;            <span class="keyword">using</span> value_type = T; </div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160; </div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;            Atomic&lt;bool&gt; is_write_;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;            value_type value_;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;        <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00053"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a93aaf00ef5fb1d108c0b9b0f4c267179">   53</a></span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1row.html">row</a> &amp;<a class="code" href="classmio_1_1tsdb_1_1row.html#a93aaf00ef5fb1d108c0b9b0f4c267179">operator=</a>(<span class="keyword">const</span> value_type &amp;val)</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;            {</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;                value_ = val;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;                is_write_ = <span class="keyword">true</span>;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;                is_write_.notify_all();</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;                <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;            }</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160; </div>
+<div class="line"><a name="l00066"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a34b82d60ed3f921447f85bc0e2a4adcd">   66</a></span>&#160;            value_type &amp;<a class="code" href="classmio_1_1tsdb_1_1row.html#a34b82d60ed3f921447f85bc0e2a4adcd">operator*</a>()</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;            {</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;                <span class="keywordflow">return</span> value_;</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;            }</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160; </div>
+<div class="line"><a name="l00076"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a8824619014cac97373085be107807012">   76</a></span>&#160;            <span class="keyword">const</span> value_type &amp;<a class="code" href="classmio_1_1tsdb_1_1row.html#a8824619014cac97373085be107807012">operator*</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;                <span class="keywordflow">return</span> value_;</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;            }</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160; </div>
+<div class="line"><a name="l00086"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a8a698849c2432722dbc97a8da5f73451">   86</a></span>&#160;            value_type *<a class="code" href="classmio_1_1tsdb_1_1row.html#a8a698849c2432722dbc97a8da5f73451">operator-&gt;</a>()</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;            {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;                <span class="keywordflow">return</span> &amp;value_;</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;            }</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160; </div>
+<div class="line"><a name="l00096"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a51aad9c567ddf6a761c89b4bcdf8b014">   96</a></span>&#160;            <span class="keyword">const</span> value_type *<a class="code" href="classmio_1_1tsdb_1_1row.html#a51aad9c567ddf6a761c89b4bcdf8b014">operator-&gt;</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;                <span class="keywordflow">return</span> &amp;value_;</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;            }</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160; </div>
+<div class="line"><a name="l00107"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a8514827f3c771045ea3909a0007e2bf9">  107</a></span>&#160;            <span class="keywordtype">bool</span> <a class="code" href="classmio_1_1tsdb_1_1row.html#a8514827f3c771045ea3909a0007e2bf9">has_value</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;                <span class="keywordflow">return</span> is_write_;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;            }</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160; </div>
+<div class="line"><a name="l00118"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a1608b816ab23fe24a6941283fc4dbe39">  118</a></span>&#160;            <span class="keyword">operator</span> bool()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;                <span class="keywordflow">return</span> <a class="code" href="classmio_1_1tsdb_1_1row.html#a8514827f3c771045ea3909a0007e2bf9">has_value</a>();</div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;            }</div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160; </div>
+<div class="line"><a name="l00127"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a695426cdbfe9c1ad40a88d0b2a5549f3">  127</a></span>&#160;            <span class="keywordtype">void</span> <a class="code" href="classmio_1_1tsdb_1_1row.html#a695426cdbfe9c1ad40a88d0b2a5549f3">wait</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;                is_write_.wait(<span class="keyword">false</span>);</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;            }</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160; </div>
+<div class="line"><a name="l00137"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a9ae2ebb698bb173d73cc2c7e4af15369">  137</a></span>&#160;            value_type &amp;<a class="code" href="classmio_1_1tsdb_1_1row.html#a9ae2ebb698bb173d73cc2c7e4af15369">value</a>()</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;            {</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;                <span class="keywordflow">if</span> (!is_write_)</div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;                {</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;                    <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;bad row access&quot;</span>);</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;                }</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160; </div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;                <span class="keywordflow">return</span> value_;</div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;            }</div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160; </div>
+<div class="line"><a name="l00152"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a7b8b71e86e3123d2428f82d4267b7f6a">  152</a></span>&#160;            <span class="keyword">const</span> value_type &amp;<a class="code" href="classmio_1_1tsdb_1_1row.html#a7b8b71e86e3123d2428f82d4267b7f6a">value</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">const_cast&lt;</span><a class="code" href="classmio_1_1tsdb_1_1row.html">row</a> *<span class="keyword">&gt;</span>(<span class="keyword">this</span>)-&gt;<a class="code" href="classmio_1_1tsdb_1_1row.html#a9ae2ebb698bb173d73cc2c7e4af15369">value</a>();</div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;            }</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160; </div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;            <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</div>
+<div class="line"><a name="l00165"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1row.html#a52f796212ba0db0b015326847bb030aa">  165</a></span>&#160;            value_type <a class="code" href="classmio_1_1tsdb_1_1row.html#a52f796212ba0db0b015326847bb030aa">value_or</a>(U &amp;&amp;default_value)<span class="keyword"> const</span></div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;                <span class="keywordflow">if</span> (!is_write_)</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;                {</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;                    <span class="keywordflow">return</span> std::move(default_value);</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;                }</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;                <span class="keywordflow">else</span></div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;                {</div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;                    <span class="keywordflow">return</span> value_;</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;                }</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;            }</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;        };</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160; </div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;        <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">template</span> &lt;<span class="keyword">typename</span>&gt; <span class="keyword">typename</span> Atomic = std::atomic&gt;</div>
+<div class="line"><a name="l00185"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html">  185</a></span>&#160;        <span class="keyword">class </span><a class="code" href="classmio_1_1tsdb_1_1table.html">table</a></div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;        {</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;        <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;            <span class="keyword">using</span> value_type = T;</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;            <span class="keyword">using</span> <a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> = <a class="code" href="classmio_1_1tsdb_1_1row.html">row&lt;value_type, Atomic&gt;</a>;</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160; </div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;            <span class="keyword">struct </span>header</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;            {</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;                Atomic&lt;std::uint64_t&gt; <a class="code" href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">size</a>;</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;                Atomic&lt;std::uint64_t&gt; <a class="code" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a>;</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;                Atomic&lt;std::uint64_t&gt; <a class="code" href="classmio_1_1tsdb_1_1table.html#a1edbd71c92263afdca06a434f16161f3">ref_cout</a>;</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;                Atomic&lt;bool&gt; lock;</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;            };</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160; </div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;            std::string mmap_name_;</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;            std::unique_ptr&lt;boost::interprocess::file_mapping&gt; file_mapp_;</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;            std::unique_ptr&lt;boost::interprocess::mapped_region&gt; region_;</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160; </div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;            header *header_;</div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> *row_;</div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160; </div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;            std::uint64_t capacity_;</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160; </div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;            <span class="keywordtype">void</span> create_file(<span class="keywordtype">size_t</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">size</a>)</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;            {</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;                std::filebuf fbuf;</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;                fbuf.open(mmap_name_, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);</div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;                fbuf.pubseekoff(<a class="code" href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">size</a> - 1, std::ios::beg);</div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;                fbuf.sputc(0);</div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;            }</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160; </div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;            <span class="keywordtype">void</span> recapacity()</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;            {</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;                std::filesystem::resize_file(mmap_name_, <span class="keyword">sizeof</span>(header) + header_-&gt;capacity * 2 * <span class="keyword">sizeof</span>(<a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a>));</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;                header_-&gt;capacity = header_-&gt;capacity * 2;</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;            }</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160; </div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;            <span class="keywordtype">void</span> remmap()</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;            {</div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;                <span class="keyword">using namespace </span>boost::interprocess;</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160; </div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;                region_-&gt;~mapped_region();</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;                <span class="keyword">new</span> (region_.get()) mapped_region(*file_mapp_, read_write);</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;                header_ = <span class="keyword">static_cast&lt;</span>header *<span class="keyword">&gt;</span>(region_-&gt;get_address());</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160; </div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;                row_ = <span class="keyword">reinterpret_cast&lt;</span><a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> *<span class="keyword">&gt;</span>(header_ + 1);</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;                capacity_ = this-&gt;get_region_capacity();</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;            }</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160; </div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;            <span class="keywordtype">size_t</span> get_region_capacity()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                <span class="keywordflow">return</span> (region_-&gt;get_size() - <span class="keyword">sizeof</span>(header)) / <span class="keyword">sizeof</span>(<a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a>);</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;            }</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160; </div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;            <span class="keywordtype">size_t</span> do_push(<span class="keyword">const</span> value_type &amp;val, <span class="keywordtype">size_t</span> index)</div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;            {</div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;                <span class="keywordflow">if</span> (index &gt;= capacity_)</div>
+<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;                {</div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;                    <span class="keyword">auto</span> flag = header_-&gt;lock.exchange(<span class="keyword">true</span>);</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160; </div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;                    <span class="keywordflow">if</span> (!flag)</div>
+<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;                    {</div>
+<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;                        this-&gt;recapacity();</div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;                        header_-&gt;lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;                        header_-&gt;capacity.notify_all();</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;                    }</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160; </div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;                    header_-&gt;capacity.wait(capacity_);</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;                    this-&gt;remmap();</div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160; </div>
+<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;                    <span class="keywordflow">return</span> this-&gt;do_push(val, index);</div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;                }</div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160; </div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;                row_[index] = val;</div>
+<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160; </div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;                <span class="keywordflow">return</span> index;</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;            }</div>
+<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160; </div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> &amp;do_read(<span class="keywordtype">size_t</span> index)</div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;            {</div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;                <span class="keywordflow">if</span> (index &gt;= capacity_)</div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;                {</div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;                    <span class="keyword">auto</span> flag = header_-&gt;lock.exchange(<span class="keyword">true</span>);</div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;                    <span class="keywordflow">if</span> (!flag)</div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;                    {</div>
+<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;                        this-&gt;recapacity();</div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;                        header_-&gt;lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;                        header_-&gt;capacity.notify_all();</div>
+<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;                    }</div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160; </div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;                    header_-&gt;capacity.wait(capacity_);</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160; </div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;                    this-&gt;remmap();</div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160; </div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;                    <span class="keywordflow">return</span> this-&gt;do_read(index);</div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;                }</div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;                <span class="keywordflow">return</span> row_[index];</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;            }</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160; </div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;        <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00298"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a37b083bba872997106f5e347869d2f13">  298</a></span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1table.html#a37b083bba872997106f5e347869d2f13">table</a>(<span class="keyword">const</span> std::string &amp;name, <span class="keywordtype">size_t</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a>)</div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;                : mmap_name_(name)</div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;            {</div>
+<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;                <span class="keyword">using namespace </span>boost::interprocess;</div>
+<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160; </div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;                this-&gt;create_file(<span class="keyword">sizeof</span>(header) + <a class="code" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a> * <span class="keyword">sizeof</span>(<a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a>));</div>
+<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160; </div>
+<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;                file_mapp_ = std::make_unique&lt;file_mapping&gt;(mmap_name_.c_str(), read_write);</div>
+<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;                region_ = std::make_unique&lt;mapped_region&gt;(*file_mapp_, read_write);</div>
+<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;                header_ = <span class="keyword">new</span> (region_-&gt;get_address()) header;</div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;                row_ = <span class="keyword">reinterpret_cast&lt;</span><a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> *<span class="keyword">&gt;</span>(header_ + 1);</div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160; </div>
+<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;                header_-&gt;size = 0;</div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;                header_-&gt;capacity = <a class="code" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a>;</div>
+<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;                header_-&gt;ref_cout = 1;</div>
+<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;                header_-&gt;lock = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;                capacity_ = this-&gt;get_region_capacity();</div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;            }</div>
+<div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160; </div>
+<div class="line"><a name="l00322"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a518795dda670c5d4160bbae4cf9d77ba">  322</a></span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1table.html#a518795dda670c5d4160bbae4cf9d77ba">table</a>(<span class="keyword">const</span> std::string &amp;name)</div>
+<div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;                : mmap_name_(name)</div>
+<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;            {</div>
+<div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;                <span class="keyword">using namespace </span>boost::interprocess;</div>
+<div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160; </div>
+<div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;                file_mapp_ = std::make_unique&lt;file_mapping&gt;(mmap_name_.c_str(), read_write);</div>
+<div class="line"><a name="l00328"></a><span class="lineno">  328</span>&#160;                region_ = std::make_unique&lt;mapped_region&gt;(*file_mapp_, read_write);</div>
+<div class="line"><a name="l00329"></a><span class="lineno">  329</span>&#160;                header_ = <span class="keyword">static_cast&lt;</span>header *<span class="keyword">&gt;</span>(region_-&gt;get_address());</div>
+<div class="line"><a name="l00330"></a><span class="lineno">  330</span>&#160;                row_ = <span class="keyword">reinterpret_cast&lt;</span><a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> *<span class="keyword">&gt;</span>(header_ + 1);</div>
+<div class="line"><a name="l00331"></a><span class="lineno">  331</span>&#160;                header_-&gt;ref_cout.fetch_add(1);</div>
+<div class="line"><a name="l00332"></a><span class="lineno">  332</span>&#160;                capacity_ = this-&gt;get_region_capacity();</div>
+<div class="line"><a name="l00333"></a><span class="lineno">  333</span>&#160;            }</div>
+<div class="line"><a name="l00334"></a><span class="lineno">  334</span>&#160; </div>
+<div class="line"><a name="l00339"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#aeaa0bb978b8d25bba582b85b53605514">  339</a></span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1table.html#aeaa0bb978b8d25bba582b85b53605514">~table</a>()</div>
+<div class="line"><a name="l00340"></a><span class="lineno">  340</span>&#160;            {</div>
+<div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;                header_-&gt;ref_cout.fetch_sub(1);</div>
+<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;            }</div>
+<div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160; </div>
+<div class="line"><a name="l00350"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a576a4c5c649f1a3ba5daac3cc7002ec4">  350</a></span>&#160;            <span class="keywordtype">size_t</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#a576a4c5c649f1a3ba5daac3cc7002ec4">push</a>(<span class="keyword">const</span> value_type &amp;val)</div>
+<div class="line"><a name="l00351"></a><span class="lineno">  351</span>&#160;            {</div>
+<div class="line"><a name="l00352"></a><span class="lineno">  352</span>&#160;                <span class="keyword">auto</span> index = header_-&gt;size.fetch_add(1);</div>
+<div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160;                <span class="keywordflow">return</span> this-&gt;do_push(val, index);</div>
+<div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;            }</div>
+<div class="line"><a name="l00355"></a><span class="lineno">  355</span>&#160; </div>
+<div class="line"><a name="l00362"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a070d723a14f4bdd44eb3650776f86c6d">  362</a></span>&#160;            <a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> &amp;<a class="code" href="classmio_1_1tsdb_1_1table.html#a070d723a14f4bdd44eb3650776f86c6d">operator[]</a>(<span class="keywordtype">size_t</span> index)</div>
+<div class="line"><a name="l00363"></a><span class="lineno">  363</span>&#160;            {</div>
+<div class="line"><a name="l00364"></a><span class="lineno">  364</span>&#160;                <span class="keywordflow">return</span> this-&gt;do_read(index);</div>
+<div class="line"><a name="l00365"></a><span class="lineno">  365</span>&#160;            }</div>
+<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160; </div>
+<div class="line"><a name="l00373"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a357fdcabb7c93874d6a9eca56be6aff2">  373</a></span>&#160;            <span class="keyword">const</span> <a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a> &amp;<a class="code" href="classmio_1_1tsdb_1_1table.html#a357fdcabb7c93874d6a9eca56be6aff2">operator[]</a>(<span class="keywordtype">size_t</span> index)<span class="keyword"> const</span></div>
+<div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00375"></a><span class="lineno">  375</span>&#160;                <span class="keywordflow">return</span> <span class="keyword">const_cast&lt;</span><a class="code" href="classmio_1_1tsdb_1_1table.html">table</a> *<span class="keyword">&gt;</span>(<span class="keyword">this</span>)-&gt;do_read(index);</div>
+<div class="line"><a name="l00376"></a><span class="lineno">  376</span>&#160;            }</div>
+<div class="line"><a name="l00377"></a><span class="lineno">  377</span>&#160; </div>
+<div class="line"><a name="l00383"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">  383</a></span>&#160;            <span class="keywordtype">size_t</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">size</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00384"></a><span class="lineno">  384</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00385"></a><span class="lineno">  385</span>&#160;                <span class="keywordflow">return</span> header_-&gt;size;</div>
+<div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;            }</div>
+<div class="line"><a name="l00387"></a><span class="lineno">  387</span>&#160; </div>
+<div class="line"><a name="l00393"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">  393</a></span>&#160;            <span class="keywordtype">size_t</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">capacity</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00394"></a><span class="lineno">  394</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00395"></a><span class="lineno">  395</span>&#160;                <span class="keywordflow">return</span> header_-&gt;capacity;</div>
+<div class="line"><a name="l00396"></a><span class="lineno">  396</span>&#160;            }</div>
+<div class="line"><a name="l00397"></a><span class="lineno">  397</span>&#160; </div>
+<div class="line"><a name="l00403"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a1edbd71c92263afdca06a434f16161f3">  403</a></span>&#160;            <span class="keywordtype">size_t</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#a1edbd71c92263afdca06a434f16161f3">ref_cout</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00404"></a><span class="lineno">  404</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00405"></a><span class="lineno">  405</span>&#160;                <span class="keywordflow">return</span> header_-&gt;ref_cout;</div>
+<div class="line"><a name="l00406"></a><span class="lineno">  406</span>&#160;            }</div>
+<div class="line"><a name="l00407"></a><span class="lineno">  407</span>&#160; </div>
+<div class="line"><a name="l00412"></a><span class="lineno"><a class="line" href="classmio_1_1tsdb_1_1table.html#a30f6b4ddf83bdc617cd3c31c5f73f69d">  412</a></span>&#160;            <span class="keywordtype">void</span> <a class="code" href="classmio_1_1tsdb_1_1table.html#a30f6b4ddf83bdc617cd3c31c5f73f69d">shrink_to_fit</a>()</div>
+<div class="line"><a name="l00413"></a><span class="lineno">  413</span>&#160;            {</div>
+<div class="line"><a name="l00414"></a><span class="lineno">  414</span>&#160;                std::filesystem::resize_file(mmap_name_, <span class="keyword">sizeof</span>(header) + header_-&gt;size * <span class="keyword">sizeof</span>(<a class="code" href="classmio_1_1tsdb_1_1row.html">row_type</a>));</div>
+<div class="line"><a name="l00415"></a><span class="lineno">  415</span>&#160;                header_-&gt;capacity = header_-&gt;size.load();</div>
+<div class="line"><a name="l00416"></a><span class="lineno">  416</span>&#160;            }</div>
+<div class="line"><a name="l00417"></a><span class="lineno">  417</span>&#160;        };</div>
+<div class="line"><a name="l00418"></a><span class="lineno">  418</span>&#160;    }</div>
+<div class="line"><a name="l00419"></a><span class="lineno">  419</span>&#160;}</div>
+</div><!-- fragment --></div><!-- contents -->
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a8a698849c2432722dbc97a8da5f73451"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a8a698849c2432722dbc97a8da5f73451">mio::tsdb::row::operator-&gt;</a></div><div class="ttdeci">value_type * operator-&gt;()</div><div class="ttdoc">访问所含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:86</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_afc72f16f1c28888b9306959b117c1ab0"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#afc72f16f1c28888b9306959b117c1ab0">mio::tsdb::table::size</a></div><div class="ttdeci">size_t size() const</div><div class="ttdoc">返回行数</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:383</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a93aaf00ef5fb1d108c0b9b0f4c267179"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a93aaf00ef5fb1d108c0b9b0f4c267179">mio::tsdb::row::operator=</a></div><div class="ttdeci">row &amp; operator=(const value_type &amp;val)</div><div class="ttdoc">对内容赋值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:53</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a37b083bba872997106f5e347869d2f13"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a37b083bba872997106f5e347869d2f13">mio::tsdb::table::table</a></div><div class="ttdeci">table(const std::string &amp;name, size_t capacity)</div><div class="ttdoc">创建一个 table</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:298</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a518795dda670c5d4160bbae4cf9d77ba"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a518795dda670c5d4160bbae4cf9d77ba">mio::tsdb::table::table</a></div><div class="ttdeci">table(const std::string &amp;name)</div><div class="ttdoc">打开一个已存在的 table</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:322</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a1edbd71c92263afdca06a434f16161f3"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a1edbd71c92263afdca06a434f16161f3">mio::tsdb::table::ref_cout</a></div><div class="ttdeci">size_t ref_cout() const</div><div class="ttdoc">返回当前table打开次数</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:403</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a52f796212ba0db0b015326847bb030aa"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a52f796212ba0db0b015326847bb030aa">mio::tsdb::row::value_or</a></div><div class="ttdeci">value_type value_or(U &amp;&amp;default_value) const</div><div class="ttdoc">若所含值可用则返回它，否则返回另一个值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:165</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a8824619014cac97373085be107807012"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a8824619014cac97373085be107807012">mio::tsdb::row::operator*</a></div><div class="ttdeci">const value_type &amp; operator*() const</div><div class="ttdoc">访问所含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:76</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_aeaa0bb978b8d25bba582b85b53605514"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#aeaa0bb978b8d25bba582b85b53605514">mio::tsdb::table::~table</a></div><div class="ttdeci">~table()</div><div class="ttdoc">析构 table</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:339</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_ac360c176d7266893633c6e9f9868c1a7"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#ac360c176d7266893633c6e9f9868c1a7">mio::tsdb::table::capacity</a></div><div class="ttdeci">size_t capacity() const</div><div class="ttdoc">返回当前存储空间能够容纳的行数</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:393</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a8514827f3c771045ea3909a0007e2bf9"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a8514827f3c771045ea3909a0007e2bf9">mio::tsdb::row::has_value</a></div><div class="ttdeci">bool has_value() const</div><div class="ttdoc">检查 *this 是否含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:107</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a7b8b71e86e3123d2428f82d4267b7f6a"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a7b8b71e86e3123d2428f82d4267b7f6a">mio::tsdb::row::value</a></div><div class="ttdeci">const value_type &amp; value() const</div><div class="ttdoc">返回所含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:152</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html">mio::tsdb::table</a></div><div class="ttdoc">表</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:185</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a576a4c5c649f1a3ba5daac3cc7002ec4"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a576a4c5c649f1a3ba5daac3cc7002ec4">mio::tsdb::table::push</a></div><div class="ttdeci">size_t push(const value_type &amp;val)</div><div class="ttdoc">在最后一行写入数据</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:350</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a357fdcabb7c93874d6a9eca56be6aff2"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a357fdcabb7c93874d6a9eca56be6aff2">mio::tsdb::table::operator[]</a></div><div class="ttdeci">const row_type &amp; operator[](size_t index) const</div><div class="ttdoc">访问行</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:373</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a9ae2ebb698bb173d73cc2c7e4af15369"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a9ae2ebb698bb173d73cc2c7e4af15369">mio::tsdb::row::value</a></div><div class="ttdeci">value_type &amp; value()</div><div class="ttdoc">返回所含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:137</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a070d723a14f4bdd44eb3650776f86c6d"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a070d723a14f4bdd44eb3650776f86c6d">mio::tsdb::table::operator[]</a></div><div class="ttdeci">row_type &amp; operator[](size_t index)</div><div class="ttdoc">访问行</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:362</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a51aad9c567ddf6a761c89b4bcdf8b014"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a51aad9c567ddf6a761c89b4bcdf8b014">mio::tsdb::row::operator-&gt;</a></div><div class="ttdeci">const value_type * operator-&gt;() const</div><div class="ttdoc">访问所含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:96</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html">mio::tsdb::row</a></div><div class="ttdoc">行</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:37</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1table_html_a30f6b4ddf83bdc617cd3c31c5f73f69d"><div class="ttname"><a href="classmio_1_1tsdb_1_1table.html#a30f6b4ddf83bdc617cd3c31c5f73f69d">mio::tsdb::table::shrink_to_fit</a></div><div class="ttdeci">void shrink_to_fit()</div><div class="ttdoc">紧缩table 使capacity等于size</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:412</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a34b82d60ed3f921447f85bc0e2a4adcd"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a34b82d60ed3f921447f85bc0e2a4adcd">mio::tsdb::row::operator*</a></div><div class="ttdeci">value_type &amp; operator*()</div><div class="ttdoc">访问所含值</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:66</div></div>
+<div class="ttc" id="aclassmio_1_1tsdb_1_1row_html_a695426cdbfe9c1ad40a88d0b2a5549f3"><div class="ttname"><a href="classmio_1_1tsdb_1_1row.html#a695426cdbfe9c1ad40a88d0b2a5549f3">mio::tsdb::row::wait</a></div><div class="ttdeci">void wait() const</div><div class="ttdoc">阻塞等待</div><div class="ttdef"><b>Definition:</b> tsdb.hpp:127</div></div>
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者 &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.17
+</small></address>
+</body>
+</html>

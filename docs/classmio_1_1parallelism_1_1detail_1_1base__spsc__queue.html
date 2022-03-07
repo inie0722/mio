@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.17"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>mio: mio::parallelism::detail::base_spsc_queue类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">mio
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.8.17 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'搜索');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><b>mio</b></li><li class="navelem"><a class="el" href="namespacemio_1_1parallelism.html">parallelism</a></li><li class="navelem"><b>detail</b></li><li class="navelem"><a class="el" href="classmio_1_1parallelism_1_1detail_1_1base__spsc__queue.html">base_spsc_queue</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pro-types">Protected 类型</a> &#124;
+<a href="#pro-methods">Protected 成员函数</a> &#124;
+<a href="#pro-attribs">Protected 属性</a> &#124;
+<a href="classmio_1_1parallelism_1_1detail_1_1base__spsc__queue-members.html">所有成员列表</a>  </div>
+  <div class="headertitle">
+<div class="title">mio::parallelism::detail::base_spsc_queue类 参考</div>  </div>
+</div><!--header-->
+<div class="contents">
+<div class="dynheader">
+类 mio::parallelism::detail::base_spsc_queue 继承关系图:</div>
+<div class="dyncontent">
+<div class="center"><img src="classmio_1_1parallelism_1_1detail_1_1base__spsc__queue__inherit__graph.png" border="0" usemap="#mio_1_1parallelism_1_1detail_1_1base__spsc__queue_inherit__map" alt="Inheritance graph"/></div>
+<map name="mio_1_1parallelism_1_1detail_1_1base__spsc__queue_inherit__map" id="mio_1_1parallelism_1_1detail_1_1base__spsc__queue_inherit__map">
+<area shape="rect" title=" " alt="" coords="8,5,181,47"/>
+<area shape="rect" href="classmio_1_1parallelism_1_1spsc__queue.html" title="单写单读 无锁队列" alt="" coords="5,95,184,136"/>
+</map>
+<center><span class="legend">[<a href="graph_legend.html">图例</a>]</span></center></div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:aed50e6a4627fa7df32a5426d36032990"><td class="memItemLeft" align="right" valign="top"><a id="aed50e6a4627fa7df32a5426d36032990"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () const</td></tr>
+<tr class="separator:aed50e6a4627fa7df32a5426d36032990"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24e2264fdbe284772fc40f0bd951730a"><td class="memItemLeft" align="right" valign="top"><a id="a24e2264fdbe284772fc40f0bd951730a"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>empty</b> () const</td></tr>
+<tr class="separator:a24e2264fdbe284772fc40f0bd951730a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9aef065029607effecdea054aca8e6bf"><td class="memItemLeft" align="right" valign="top"><a id="a9aef065029607effecdea054aca8e6bf"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_lock_free</b> () const</td></tr>
+<tr class="separator:a9aef065029607effecdea054aca8e6bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ca9ee0fb324b9a749b036be021ca5c9"><td class="memItemLeft" align="right" valign="top"><a id="a4ca9ee0fb324b9a749b036be021ca5c9"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><b>max_size</b> () const</td></tr>
+<tr class="separator:a4ca9ee0fb324b9a749b036be021ca5c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
+Protected 类型</h2></td></tr>
+<tr class="memitem:af8715083abdbc3131e0e7c75edc2a2b1"><td class="memItemLeft" align="right" valign="top"><a id="af8715083abdbc3131e0e7c75edc2a2b1"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b> = std::size_t</td></tr>
+<tr class="separator:af8715083abdbc3131e0e7c75edc2a2b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected 成员函数</h2></td></tr>
+<tr class="memitem:a7ca946934b7aa7a756059fdbc1171f5a"><td class="memItemLeft" align="right" valign="top"><a id="a7ca946934b7aa7a756059fdbc1171f5a"></a>
+size_type&#160;</td><td class="memItemRight" valign="bottom"><b>get_index</b> (size_type index) const</td></tr>
+<tr class="separator:a7ca946934b7aa7a756059fdbc1171f5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a112dce5661506267c74f3753166c5281"><td class="memItemLeft" align="right" valign="top"><a id="a112dce5661506267c74f3753166c5281"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>base_spsc_queue</b> (size_type max_size)</td></tr>
+<tr class="separator:a112dce5661506267c74f3753166c5281"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1963e9ad09d362d2630f9ce81be1c08"><td class="memTemplParams" colspan="2"><a id="ab1963e9ad09d362d2630f9ce81be1c08"></a>
+template&lt;std::random_access_iterator OutputIt, std::forward_iterator InputIt&gt; </td></tr>
+<tr class="memitem:ab1963e9ad09d362d2630f9ce81be1c08"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>push</b> (OutputIt data, InputIt first, size_type count)</td></tr>
+<tr class="separator:ab1963e9ad09d362d2630f9ce81be1c08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace222bdef68e1b40d6651fe009b06dab"><td class="memTemplParams" colspan="2"><a id="ace222bdef68e1b40d6651fe009b06dab"></a>
+template&lt;std::random_access_iterator InputIt, std::forward_iterator OutputIt&gt; </td></tr>
+<tr class="memitem:ace222bdef68e1b40d6651fe009b06dab"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>pop</b> (InputIt data, OutputIt result, size_type count)</td></tr>
+<tr class="separator:ace222bdef68e1b40d6651fe009b06dab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected 属性</h2></td></tr>
+<tr class="memitem:adbf99e064f471a5ac7afa62284b12316"><td class="memItemLeft" align="right" valign="top"><a id="adbf99e064f471a5ac7afa62284b12316"></a>
+const size_type&#160;</td><td class="memItemRight" valign="bottom"><b>max_size_</b></td></tr>
+<tr class="separator:adbf99e064f471a5ac7afa62284b12316"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeac8c207cb76101eaa2f8a00fa3ef2a4"><td class="memItemLeft" align="right" valign="top"><a id="aeac8c207cb76101eaa2f8a00fa3ef2a4"></a>
+std::atomic&lt; size_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>writable_limit_</b> = 0</td></tr>
+<tr class="separator:aeac8c207cb76101eaa2f8a00fa3ef2a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9684b4b90a60ff7c9c2b9adf2a03c744"><td class="memItemLeft" align="right" valign="top"><a id="a9684b4b90a60ff7c9c2b9adf2a03c744"></a>
+std::atomic&lt; size_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>readable_limit_</b> = 0</td></tr>
+<tr class="separator:a9684b4b90a60ff7c9c2b9adf2a03c744"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>parallelism/<a class="el" href="spsc__queue_8hpp_source.html">spsc_queue.hpp</a></li>
+</ul>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者 &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.17
+</small></address>
+</body>
+</html>

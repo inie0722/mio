@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.17"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>mio: chrono.hpp 源文件</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">mio
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.8.17 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'搜索');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div class="header">
+  <div class="headertitle">
+<div class="title">chrono.hpp</div>  </div>
+</div><!--header-->
+<div class="contents">
+<a href="chrono_8hpp.html">浏览该文件的文档.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160; </div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor">#pragma once</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160; </div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160; </div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#include &lt;chrono&gt;</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor">#include &lt;sstream&gt;</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor">#include &lt;iomanip&gt;</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160; </div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#include &lt;boost/algorithm/string.hpp&gt;</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &lt;boost/date_time.hpp&gt;</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160; </div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="keyword">namespace </span>mio</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;{</div>
+<div class="line"><a name="l00027"></a><span class="lineno"><a class="line" href="namespacemio_1_1chrono.html">   27</a></span>&#160;    <span class="keyword">namespace </span>chrono</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    {</div>
+<div class="line"><a name="l00034"></a><span class="lineno"><a class="line" href="namespacemio_1_1chrono.html#a57b8b52bab72a16a496ae626cb7939a3">   34</a></span>&#160;        <span class="keyword">inline</span> std::chrono::nanoseconds <a class="code" href="namespacemio_1_1chrono.html#a57b8b52bab72a16a496ae626cb7939a3">now</a>()</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;        {</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;            <span class="keyword">using namespace </span>std::chrono;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;            <span class="keywordflow">return</span> duration_cast&lt;nanoseconds&gt;(<a class="code" href="namespacemio_1_1chrono.html#a57b8b52bab72a16a496ae626cb7939a3">system_clock::now</a>().time_since_epoch());</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        }</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
+<div class="line"><a name="l00046"></a><span class="lineno"><a class="line" href="namespacemio_1_1chrono.html#a74a7b2468fce04942ca8ae684315eeef">   46</a></span>&#160;        <span class="keyword">inline</span> std::chrono::nanoseconds <a class="code" href="namespacemio_1_1chrono.html#a74a7b2468fce04942ca8ae684315eeef">to_time</a>(<span class="keyword">const</span> std::string &amp;time)</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        {</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;            <span class="keyword">using namespace </span>std::chrono_literals;</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;            std::vector&lt;std::string&gt; strs;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;            boost::split(strs, time, boost::is_any_of(<span class="stringliteral">&quot;.&quot;</span>));</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160; </div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;            tm tm_;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;            strptime(strs[0].c_str(), <span class="stringliteral">&quot;%Y-%m-%d %H:%M:%S&quot;</span>, &amp;tm_);</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;            <span class="keywordflow">return</span> std::chrono::nanoseconds(std::chrono::seconds(mktime(&amp;tm_))) + std::chrono::nanoseconds(std::stoull(strs[1]));</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        }</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160; </div>
+<div class="line"><a name="l00061"></a><span class="lineno"><a class="line" href="classmio_1_1chrono_1_1stopwatch.html">   61</a></span>&#160;        <span class="keyword">class </span><a class="code" href="classmio_1_1chrono_1_1stopwatch.html">stopwatch</a></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        {</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;            std::chrono::nanoseconds start_ = <a class="code" href="namespacemio_1_1chrono.html#a57b8b52bab72a16a496ae626cb7939a3">mio::chrono::now</a>();</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160; </div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00072"></a><span class="lineno"><a class="line" href="classmio_1_1chrono_1_1stopwatch.html#acfbd6785b2352ff62cc5e5b53f11d894">   72</a></span>&#160;            std::chrono::nanoseconds <a class="code" href="classmio_1_1chrono_1_1stopwatch.html#acfbd6785b2352ff62cc5e5b53f11d894">operator()</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="keyword">            </span>{</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;                <span class="keywordflow">return</span> <a class="code" href="namespacemio_1_1chrono.html#a57b8b52bab72a16a496ae626cb7939a3">mio::chrono::now</a>() - this-&gt;start_;</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;            }</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;        };</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    } <span class="comment">// namespace chrono</span></div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160; </div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> Rep, <span class="keyword">typename</span> Period&gt;</div>
+<div class="line"><a name="l00088"></a><span class="lineno"><a class="line" href="chrono_8hpp.html#adea2e1aee9de984c3108670b1d8e6ce9">   88</a></span>&#160;    <span class="keyword">inline</span> std::string <a class="code" href="chrono_8hpp.html#adea2e1aee9de984c3108670b1d8e6ce9">to_string</a>(<span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;rtime)</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;    {</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160; </div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        <span class="keyword">using namespace </span>std::chrono;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="keyword">using namespace </span>std::chrono_literals;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160; </div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        std::chrono::nanoseconds ns = rtime % 1s;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160; </div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        std::stringstream ss;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        std::chrono::time_point&lt;std::chrono::system_clock&gt; tt(std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(rtime));</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;        <span class="keyword">auto</span> t = std::chrono::system_clock::to_time_t(tt);</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        ss &lt;&lt; std::put_time(std::localtime(&amp;t), <span class="stringliteral">&quot;%F %T.&quot;</span>);</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160; </div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;        ss &lt;&lt; ns.count();</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        <span class="keywordflow">return</span> ss.str();</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    }</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;} <span class="comment">// namespace mio</span></div>
+</div><!-- fragment --></div><!-- contents -->
+<div class="ttc" id="anamespacemio_1_1chrono_html_a74a7b2468fce04942ca8ae684315eeef"><div class="ttname"><a href="namespacemio_1_1chrono.html#a74a7b2468fce04942ca8ae684315eeef">mio::chrono::to_time</a></div><div class="ttdeci">std::chrono::nanoseconds to_time(const std::string &amp;time)</div><div class="ttdoc">将字符串 转换为时间</div><div class="ttdef"><b>Definition:</b> chrono.hpp:46</div></div>
+<div class="ttc" id="aclassmio_1_1chrono_1_1stopwatch_html"><div class="ttname"><a href="classmio_1_1chrono_1_1stopwatch.html">mio::chrono::stopwatch</a></div><div class="ttdoc">计时器</div><div class="ttdef"><b>Definition:</b> chrono.hpp:61</div></div>
+<div class="ttc" id="achrono_8hpp_html_adea2e1aee9de984c3108670b1d8e6ce9"><div class="ttname"><a href="chrono_8hpp.html#adea2e1aee9de984c3108670b1d8e6ce9">mio::to_string</a></div><div class="ttdeci">std::string to_string(const std::chrono::duration&lt; Rep, Period &gt; &amp;rtime)</div><div class="ttdoc">将时间转换为字符串</div><div class="ttdef"><b>Definition:</b> chrono.hpp:88</div></div>
+<div class="ttc" id="anamespacemio_1_1chrono_html_a57b8b52bab72a16a496ae626cb7939a3"><div class="ttname"><a href="namespacemio_1_1chrono.html#a57b8b52bab72a16a496ae626cb7939a3">mio::chrono::now</a></div><div class="ttdeci">std::chrono::nanoseconds now()</div><div class="ttdoc">获取当前时间</div><div class="ttdef"><b>Definition:</b> chrono.hpp:34</div></div>
+<div class="ttc" id="aclassmio_1_1chrono_1_1stopwatch_html_acfbd6785b2352ff62cc5e5b53f11d894"><div class="ttname"><a href="classmio_1_1chrono_1_1stopwatch.html#acfbd6785b2352ff62cc5e5b53f11d894">mio::chrono::stopwatch::operator()</a></div><div class="ttdeci">std::chrono::nanoseconds operator()() const</div><div class="ttdoc">获取 计算器构造至调用时经过的纳秒数</div><div class="ttdef"><b>Definition:</b> chrono.hpp:72</div></div>
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者 &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.17
+</small></address>
+</body>
+</html>
