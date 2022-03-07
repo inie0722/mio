@@ -1,3 +1,13 @@
+/**
+ * @file chrono.hpp
+ * @author 然Y (inie0722@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-04
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #pragma once
 
 #include <stdint.h>
@@ -13,14 +23,29 @@
 
 namespace mio
 {
+    /**
+     * @brief 时间模块
+     *
+     */
     namespace chrono
     {
+        /**
+         * @brief 获取当前时间
+         *
+         * @return std::chrono::nanoseconds
+         */
         inline std::chrono::nanoseconds now()
         {
             using namespace std::chrono;
             return duration_cast<nanoseconds>(system_clock::now().time_since_epoch());
         }
 
+        /**
+         * @brief 将字符串 转换为时间
+         *
+         * @param time 格式 2000-08-21 00:07:22.0
+         * @return std::chrono::nanoseconds
+         */
         inline std::chrono::nanoseconds to_time(const std::string &time)
         {
             using namespace std::chrono_literals;
@@ -32,12 +57,21 @@ namespace mio
             return std::chrono::nanoseconds(std::chrono::seconds(mktime(&tm_))) + std::chrono::nanoseconds(std::stoull(strs[1]));
         }
 
+        /**
+         * @brief 计时器
+         *
+         */
         class stopwatch
         {
         private:
             std::chrono::nanoseconds start_ = mio::chrono::now();
 
         public:
+            /**
+             * @brief 获取 计算器构造至调用时经过的纳秒数
+             *
+             * @return std::chrono::nanoseconds
+             */
             std::chrono::nanoseconds operator()() const
             {
                 return mio::chrono::now() - this->start_;
@@ -45,6 +79,14 @@ namespace mio
         };
     } // namespace chrono
 
+    /**
+     * @brief 将时间转换为字符串
+     *
+     * @tparam Rep 表示计次数的算术类型
+     * @tparam Period 表示计次周期
+     * @param rtime
+     * @return std::string 格式 2000-08-21 00:07:22.0
+     */
     template <typename Rep, typename Period>
     inline std::string to_string(const std::chrono::duration<Rep, Period> &rtime)
     {

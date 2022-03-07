@@ -1,3 +1,13 @@
+/**
+ * @file format.hpp
+ * @author 然Y (inie0722@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-04
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #pragma once
 
 #include <chrono>
@@ -6,6 +16,12 @@
 
 #include <mio/chrono.hpp>
 
+/**
+ * @brief fmt 时间类型 格式化
+ *
+ * @tparam Rep 表示计次数的算术类型
+ * @tparam Period 表示计次周期
+ */
 template <typename Rep, typename Period>
 struct fmt::formatter<std::chrono::duration<Rep, Period>>
 {
