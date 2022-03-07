@@ -1,15 +1,31 @@
+/**
+ * @file aba_ptr.hpp
+ * @author 然Y (inie0722@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-07
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #pragma once
 
 #include <cstddef>
 #include <cstdint>
 #include <atomic>
 
+//仅支持64位系统
 static_assert(sizeof(void *) == 8, "64-bit system only");
 
 namespace mio
 {
     namespace parallelism
     {
+        /**
+         * @brief aba 指针
+         * @details 采用计数方法 解决多线程aba问题
+         * @tparam T
+         */
         template <typename T>
         class aba_ptr
         {
@@ -117,6 +133,11 @@ namespace mio
 
 namespace std
 {
+    /**
+     * @brief aba_ptr atomic特化
+     * @details 每次调用写入操作函数 均会使aba_ptr计数加1
+     * @tparam T
+     */
     template <typename T>
     class atomic<mio::parallelism::aba_ptr<T>>
     {

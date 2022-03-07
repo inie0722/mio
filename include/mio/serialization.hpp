@@ -18,10 +18,6 @@
 
 namespace mio
 {
-    /**
-     * @brief 序列化
-     *
-     */
     namespace serialization
     {
         /**

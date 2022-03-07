@@ -1,3 +1,13 @@
+/**
+ * @file allocator.hpp
+ * @author 然Y (inie0722@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-07
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #pragma once
 
 #include <cstddef>
@@ -11,6 +21,13 @@ namespace mio
 {
     namespace parallelism
     {
+        /**
+         * @brief 多线程无锁分配器
+         * @details 底层才用无锁free list 实现
+         *          内部包含缓存只有当分配器析构时 才能释放内存
+         * @tparam T
+         * @tparam Allocator 底层分配器类型
+         */
         template <typename T, typename Allocator = std::allocator<T>>
         class allocator
         {

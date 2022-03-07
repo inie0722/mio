@@ -1,3 +1,13 @@
+/**
+ * @file spsc_queue.hpp
+ * @author 然Y (inie0722@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-07
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #pragma once
 
 #include <cstddef>
@@ -111,7 +121,13 @@ namespace mio
                 }
             };
         }
-        
+
+        /**
+         * @brief 单写单读 无锁队列
+         * @details 无等待数据结构
+         * @tparam T
+         * @tparam Container
+         */
         template <typename T, typename Container = std::vector<T>>
         class spsc_queue : public detail::base_spsc_queue
         {
@@ -125,7 +141,7 @@ namespace mio
 
             void resize(size_type max_size)
             {
-                if constexpr(requires(container_type a){a.resize(max_size);})
+                if constexpr (requires(container_type a) { a.resize(max_size); })
                     c.resize(max_size);
             }
 
@@ -135,7 +151,7 @@ namespace mio
             {
                 this->resize(max_size);
             }
-            
+
             ~spsc_queue() = default;
 
             template <typename InputIt>

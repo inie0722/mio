@@ -1,3 +1,13 @@
+/**
+ * @file interprocess.hpp
+ * @author 然Y (inie0722@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-07
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #pragma once
 
 #include <boost/interprocess/offset_ptr.hpp>
@@ -13,13 +23,21 @@ namespace mio
 {
     namespace interprocess
     {
+        /// 偏移指针
         template <typename T>
         using offset_ptr = boost::interprocess::offset_ptr<T, int64_t, uint64_t>;
 
+        /// 共享内存
         using managed_shared_memory = boost::interprocess::basic_managed_shared_memory<char, boost::interprocess::rbtree_best_fit<boost::interprocess::mutex_family, offset_ptr<void>>, boost::interprocess::iset_index>;
 
+        /// 文件映射
         using managed_mapped_file = boost::interprocess::basic_managed_mapped_file<char, boost::interprocess::rbtree_best_fit<boost::interprocess::mutex_family, offset_ptr<void>>, boost::interprocess::iset_index>;
 
+        /**
+         * @brief 多态分配器
+         * @details 可以分配共享内存 也可以直接分配内存
+         * @tparam T
+         */
         template <typename T>
         class allocator
         {
