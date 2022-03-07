@@ -21,6 +21,7 @@
 
 namespace mio
 {
+    /// @brief 进程间通信
     namespace interprocess
     {
         /// 偏移指针

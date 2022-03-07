@@ -23,10 +23,7 @@
 
 namespace mio
 {
-    /**
-     * @brief 时间模块
-     *
-     */
+    /// @brief 时间模块
     namespace chrono
     {
         /**
