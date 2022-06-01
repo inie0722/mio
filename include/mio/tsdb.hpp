@@ -257,8 +257,6 @@ namespace mio
 
                     header_->capacity.wait(capacity_);
                     this->remmap();
-
-                    return this->do_push(val, index);
                 }
 
                 row_[index] = val;
@@ -282,8 +280,6 @@ namespace mio
                     header_->capacity.wait(capacity_);
 
                     this->remmap();
-
-                    return this->do_read(index);
                 }
                 return row_[index];
             }
